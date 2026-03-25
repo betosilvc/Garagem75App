@@ -1,0 +1,124 @@
+﻿@page "/clientes/{id:int}/detalhe"
+@using Garagem75.Shared.Dtos
+@inject IJSRuntime JS
+@inject ClienteApi ClienteApi
+@inject VeiculoApi VeiculoApi
+@inject NavigationManager Nav
+
+<div class="app-container">
+
+    <!-- HEADER -->
+    <div class="header">
+        <button class="back" @onclick="Voltar">←</button>
+        <div>
+            <h2>@cliente?.Nome</h2>
+            <span>@cliente?.Telefone</span>
+        </div>
+    </div>
+
+    @if (cliente == null)
+    {
+        <p>Carregando...</p>
+    }
+    else
+    {
+        <!-- ENDEREÇO -->
+        <div class="section">
+            <h4>📍 Endereços</h4>
+
+            @if (!cliente.Enderecos.Any())
+            {
+                <p>Nenhum endereço</p>
+            }
+            else
+            {
+                @foreach (var e in cliente.Enderecos)
+                {
+                    <div class="card-app">
+                        <div>
+                            <strong>@e.Rua, @e.Numero</strong>
+                            <p>@e.Bairro - @e.Cidade/@e.Uf</p>
+                        </div>
+
+                        <button class="btn-delete"
+                                @onclick:stopPropagation="true"
+                                @onclick="() => ExcluirEndereco(e.IdEndereco)">
+                            🗑️
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- VEÍCULOS -->
+        <div class="section">
+            <h4>🚗 Veículos</h4>
+
+            @if (!veiculos.Any())
+            {
+                <p>Nenhum veículo cadastrado</p>
+            }
+            else
+            {
+                @foreach (var v in veiculos)
+                {
+                    <div class="card-app" @onclick="() => VerVeiculo(v.IdVeiculo)">
+                        <div>
+                            <strong>@v.Modelo</strong>
+                            <p>@v.Placa</p>
+                        </div>
+
+                        <span>➡️</span>
+                    </div>
+                }
+            }
+        </div>
+    }
+
+    <!-- BOTÃO FLUTUANTE -->
+    <button class="fab" @onclick="NovoVeiculo">+</button>
+
+</div>
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    ClienteDto? cliente;
+    List<VeiculoDto> veiculos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cliente = await ClienteApi.GetById(id);
+
+        var todos = await VeiculoApi.GetAll();
+        veiculos = todos.Where(v => v.ClienteId == id).ToList();
+    }
+
+    void Voltar()
+    {
+        Nav.NavigateTo("/clientes");
+    }
+
+    void VerVeiculo(int id)
+    {
+        Nav.NavigateTo($"/veiculos/{id}");
+    }
+
+    void NovoVeiculo()
+    {
+        Nav.NavigateTo($"/veiculos/novo?clienteId={id}");
+    }
+
+    async Task ExcluirEndereco(int idEndereco)
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Excluir endereço?");
+
+        if (!confirm)
+            return;
+
+        await ClienteApi.DeleteEndereco(idEndereco);
+
+        // 🔄 recarrega cliente
+        cliente = await ClienteApi.GetById(id);
+    }
+}

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Garagem75.Shared/Garagem75.Shared.csproj" />
+  <Project Path="Garagem75Api/Garagem75.Api.csproj" />
+  <Project Path="Garagem76.Client/Garagem76.Client.csproj" Id="0f3f2b4c-dba0-40b8-b829-baaf00f2efe1" />
+</Solution>

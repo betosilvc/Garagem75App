@@ -1,0 +1,35 @@
+﻿@page "/os"
+@inject OrdemServicoApi Api
+@inject NavigationManager Nav
+
+<h3>Ordens de Serviço</h3>
+
+<button class="btn btn-primary" @onclick="Nova">+ Nova OS</button>
+
+<div class="grid-pecas">
+    @foreach (var os in lista)
+    {
+        <div class="card-app" @onclick="() => Detalhe(os.IdOrdemServico)">
+
+            <strong>OS #@os.IdOrdemServico</strong>
+
+            <p>Status: @os.Status</p>
+
+            <span class="preco">R$ @os.ValorTotal</span>
+
+        </div>
+    }
+</div>
+
+@code {
+    List<OrdemServicoDto> lista = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        lista = await Api.GetAll();
+    }
+
+    void Nova() => Nav.NavigateTo("/os/nova");
+
+    void Detalhe(int id) => Nav.NavigateTo($"/os/{id}");
+}

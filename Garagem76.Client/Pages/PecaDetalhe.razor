@@ -1,0 +1,61 @@
+﻿@page "/pecas/{id:int}"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+@inject IJSRuntime JS
+@inject PecaApi Api
+@inject NavigationManager Nav
+
+@if (peca == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <div class="card p-3">
+
+        <img src="@(string.IsNullOrEmpty(peca.Imagem) ? "img/sem-imagem.png" : peca.Imagem)" class="img-full" />
+
+        <h4>@peca.Nome</h4>
+        <p><strong>Marca:</strong> @peca.Marca</p>
+        <p><strong>Fornecedor:</strong> @peca.Fornecedor</p>
+
+        <p><strong>Preço:</strong> R$ @peca.Preco</p>
+
+        <p>
+            <strong>Estoque:</strong>
+            <span class="badge @(peca.QuantidadeEstoque < 5 ? "bg-danger" : "bg-success")">
+                @peca.QuantidadeEstoque
+            </span>
+        </p>
+
+        <button class="btn btn-primary" @onclick="Editar">Editar</button>
+        <button class="btn btn-danger" @onclick="Excluir">Excluir</button>
+    </div>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    PecaDto? peca;
+
+    protected override async Task OnInitializedAsync()
+    {
+        peca = await Api.GetById(id);
+    }
+
+    void Editar()
+    {
+        Nav.NavigateTo($"/pecas/editar/{id}");
+    }
+
+    async Task Excluir()
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Deseja excluir esta peça?");
+
+        if (!confirm)
+            return;
+
+        await Api.Delete(id);
+        Nav.NavigateTo("/pecas");
+    }
+}

@@ -1,0 +1,119 @@
+﻿@page "/clientes"
+@using Garagem75.Shared.Dtos
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject ClienteApi Api
+@inject NavigationManager Nav
+
+<h3>Clientes</h3>
+
+<button class="btn btn-primary" @onclick="Novo">+ Novo</button>
+
+@if (loading)
+{
+    <p>Carregando...</p>
+}
+else if (clientes.Count == 0)
+{
+    <p>Nenhum cliente encontrado.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in clientes)
+            {
+                <tr>
+                    <td>@c.Id</td>
+                    <td>@c.Nome</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" @onclick="() => Editar(c.Id)">Editar</button>
+                    </td>
+                </tr>
+                <button class="btn btn-sm btn-danger" @onclick="() => AbrirModal(c.Id)">
+                    Excluir
+                </button>
+            }
+        </tbody>
+    </table>
+}
+
+@if (mostrarModal)
+{
+    <div class="modal fade show" style="display:block; background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar exclusão</h5>
+                </div>
+
+                <div class="modal-body">
+                    Deseja excluir este cliente?
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="FecharModal">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ExcluirConfirmado">Excluir</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<ClienteDto> clientes = new();
+    bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await Api.GetAll();
+        loading = false;
+    }
+
+    void Novo() => Nav.NavigateTo("/clientes/novo");
+    void Editar(int id) => Nav.NavigateTo($"/clientes/{id}");
+    async Task Excluir(int id)
+    {
+        await Api.Delete(id);
+        clientes = await Api.GetAll();
+    }
+
+    async Task ConfirmarExclusao(int id)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", "Deseja excluir este cliente?"))
+        {
+            await Api.Delete(id);
+            clientes = await Api.GetAll();
+        }
+    }
+
+    bool mostrarModal = false;
+    int idSelecionado;
+
+    void AbrirModal(int id)
+    {
+        idSelecionado = id;
+        mostrarModal = true;
+    }
+
+    void FecharModal()
+    {
+        mostrarModal = false;
+    }
+
+    async Task ExcluirConfirmado()
+    {
+        await Api.Delete(idSelecionado);
+        clientes = await Api.GetAll();
+        mostrarModal = false;
+    }
+}

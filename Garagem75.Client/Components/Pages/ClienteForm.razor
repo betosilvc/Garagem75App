@@ -1,0 +1,46 @@
+﻿@page "/clientes/novo"
+@page "/clientes/{id:int}"
+@using Microsoft.AspNetCore.Components.Forms
+@using Garagem75.Shared.Dtos
+
+@inject ClienteApi Api
+@inject NavigationManager Nav
+
+<h3>@(id == null ? "Novo Cliente" : "Editar Cliente")</h3>
+
+<EditForm Model="cliente" OnValidSubmit="Salvar">
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label>Nome</label>
+        <InputText class="form-control" @bind-Value="cliente.Nome" />
+    </div>
+
+    <button class="btn btn-success">Salvar</button>
+</EditForm>
+
+@code {
+    [Parameter] public int? id { get; set; }
+
+    ClienteDto cliente = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id.HasValue)
+        {
+            var c = await Api.GetById(id.Value);
+            if (c != null)
+                cliente = c;
+        }
+    }
+
+    async Task Salvar()
+    {
+        if (id == null)
+            await Api.Create(cliente);
+        else
+            await Api.Update(id.Value, cliente);
+
+        Nav.NavigateTo("/clientes");
+    }
+}

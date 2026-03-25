@@ -1,0 +1,32 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="app-container">
+    <div class="content">
+        @Body
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="/clientes" class="nav-item @(IsActive("/clientes") ? "active" : "")">
+            <span class="icon">👤</span>
+            <small>Clientes</small>
+        </a>
+
+        <a href="/veiculos" class="nav-item @(IsActive("/veiculos") ? "active" : "")">
+            <span class="icon">🚗</span>
+            <small>Veículos</small>
+        </a>
+
+        <a href="/pecas" class="nav-item @(IsActive("/pecas") ? "active" : "")">
+            <span class="icon">🔧</span>
+            <small>Peças</small>
+        </a>
+    </nav>
+</div>
+
+@code {
+    bool IsActive(string url)
+    {
+        return Nav.Uri.Contains(url);
+    }
+}

@@ -1,0 +1,210 @@
+﻿@page "/clientes/novo"
+@page "/clientes/{id:int}"
+@inject HttpClient Http
+@using Garagem75.Shared.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Garagem75.Shared.Dtos
+@using System.Net.Http.Json;
+
+@inject ClienteApi Api
+@inject NavigationManager Nav
+
+<h3 class="page-title">
+    @(id == null ? "Novo Cliente" : "Editar Cliente")
+</h3>
+
+<div class="card app-card">
+
+    <EditForm Model="cliente" OnValidSubmit="Salvar" OnFieldChanged="ValidarCampo">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-grid">
+
+            <div class="input-group">
+                <label>Nome</label>
+                <InputText class="input" @bind-Value="cliente.Nome" placeholder="Digite o nome" />
+                <ValidationMessage For="@(() => cliente.Nome)" />
+            </div>
+
+            <div class="input-group">
+                <label>CPF</label>
+                <InputText class="input" @bind-Value="cliente.Cpf" @oninput="FormatarCpf" placeholder="000.000.000-00" />
+                <ValidationMessage For="@(() => cliente.Cpf)" />
+            </div>
+
+            <div class="input-group">
+                <label>Telefone</label>
+                <InputText class="input" @bind-Value="cliente.Telefone" placeholder="(11) 99999-9999" />
+                <ValidationMessage For="@(() => cliente.Telefone)" />
+            </div>
+
+            <div class="input-group">
+                <label>Email</label>
+                <InputText class="input" @bind-Value="cliente.Email" type="email" placeholder="email@email.com" />
+                <ValidationMessage For="@(() => cliente.Email)" />
+            </div>
+
+        </div>
+        <hr />
+
+        <h5>Endereço</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label>CEP</label>
+                <InputText class="form-control"
+                           @bind-Value="enderecoAtual.Cep"
+                           @onblur="BuscarCep" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Rua</label>
+                <InputText class="form-control" @bind-Value="enderecoAtual.Rua" />
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label>Número</label>
+                <InputNumber class="form-control" @bind-Value="enderecoAtual.Numero" />
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Bairro</label>
+                <InputText class="form-control" @bind-Value="enderecoAtual.Bairro" />
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <label>Cidade</label>
+                <InputText class="form-control" @bind-Value="enderecoAtual.Cidade" />
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label>UF</label>
+                <InputText class="form-control" @bind-Value="enderecoAtual.Uf" />
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" @onclick="AdicionarEndereco">
+            + Adicionar Endereço
+        </button>
+
+        @if (cliente.Enderecos.Any())
+        {
+            <ul class="list-group mt-3">
+                @foreach (var e in cliente.Enderecos)
+                {
+                    <li class="list-group-item">
+                        @e.Rua, @e.Numero - @e.Cidade/@e.Uf
+                    </li>
+                }
+            </ul>
+        }
+
+
+        <div class="form-actions">
+            <button class="btn-primary" disabled="@salvando">
+                @(salvando ? "Salvando..." : "Salvar")
+            </button>
+
+            <button type="button" class="btn-secondary" @onclick="Voltar">
+                Cancelar
+            </button>
+        </div>
+
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int? id { get; set; }
+
+    ClienteDto cliente = new()
+    {
+        Enderecos = new List<EnderecoDto>()
+    };
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (id.HasValue)
+        {
+            var c = await Api.GetById(id.Value);
+            if (c != null)
+                cliente = c;
+        }
+    }
+
+
+    void Voltar()
+    {
+        Nav.NavigateTo("/clientes");
+    }
+
+    bool salvando = false;
+
+    async Task Salvar()
+    {
+        salvando = true;
+
+        // 🔍 DEBUG
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(cliente));
+
+        if (id == null)
+            await Api.Create(cliente);
+        else
+            await Api.Update(id.Value, cliente);
+
+        salvando = false;
+
+        Nav.NavigateTo("/clientes");
+    }
+    void FormatarCpf(ChangeEventArgs e)
+    {
+        var valor = e.Value?.ToString()?.Replace(".", "").Replace("-", "") ?? "";
+
+        if (valor.Length > 11)
+            valor = valor[..11];
+
+        cliente.Cpf = valor;
+    }
+
+    void ValidarCampo(object? sender, FieldChangedEventArgs e)
+    {
+        // já ativa validação automática
+    }
+
+    EnderecoDto enderecoAtual = new();
+
+    void AdicionarEndereco()
+    {
+        cliente.Enderecos.Add(new EnderecoDto
+        {
+            Rua = enderecoAtual.Rua,
+            Numero = enderecoAtual.Numero,
+            Bairro = enderecoAtual.Bairro,
+            Cidade = enderecoAtual.Cidade,
+            Uf = enderecoAtual.Uf,
+            Cep = enderecoAtual.Cep
+        });
+
+        enderecoAtual = new();
+    }
+
+
+    async Task BuscarCep()
+    {
+        if (string.IsNullOrWhiteSpace(enderecoAtual.Cep))
+            return;
+
+        var cep = enderecoAtual.Cep.Replace("-", "");
+
+        var endereco = await Http.GetFromJsonAsync<ViaCepResponse>(
+            $"https://viacep.com.br/ws/{cep}/json/");
+
+        if (endereco != null && endereco.erro != true)
+        {
+            enderecoAtual.Rua = endereco.logradouro;
+            enderecoAtual.Bairro = endereco.bairro;
+            enderecoAtual.Cidade = endereco.localidade;
+            enderecoAtual.Uf = endereco.uf;
+        }
+    }
+}

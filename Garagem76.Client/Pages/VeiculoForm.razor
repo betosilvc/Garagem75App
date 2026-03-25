@@ -1,0 +1,97 @@
+﻿@page "/veiculos/novo"
+@page "/veiculos/{id:int}"
+@using Garagem75.Shared.Dtos
+
+@inject VeiculoApi Api
+@inject ClienteApi ClienteApi
+@inject NavigationManager Nav
+
+<h3>@(id == 0 ? "Novo Veículo" : "Editar Veículo")</h3>
+
+<div class="card app-card">
+
+    <EditForm Model="veiculo" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-grid">
+
+            <div class="input-group">
+                <label>Fabricante</label>
+                <InputText class="input" @bind-Value="veiculo.Fabricante" />
+            </div>
+
+            <div class="input-group">
+                <label>Modelo</label>
+                <InputText class="input" @bind-Value="veiculo.Modelo" />
+            </div>
+
+            <div class="input-group">
+                <label>Ano</label>
+                <InputNumber class="input" @bind-Value="veiculo.Ano" />
+            </div>
+
+            <div class="input-group">
+                <label>Placa</label>
+                <InputText class="input" @bind-Value="veiculo.Placa" />
+            </div>
+
+            <div class="input-group">
+                <label>Cor</label>
+                <InputText class="input" @bind-Value="veiculo.Cor" />
+            </div>
+
+            <!-- 🔥 SELECT DE CLIENTE -->
+            <div class="input-group">
+                <label>Cliente</label>
+
+                <InputSelect class="input" @bind-Value="veiculo.ClienteId">
+                    <option value="">Selecione</option>
+
+                    @foreach (var c in clientes)
+                    {
+                        <option value="@c.Id">@c.Nome</option>
+                    }
+                </InputSelect>
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+            <button class="btn-primary">Salvar</button>
+            <button type="button" class="btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    VeiculoDto veiculo = new();
+    List<ClienteDto> clientes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await ClienteApi.GetAll();
+
+        if (id != 0)
+        {
+            var v = await Api.GetById(id);
+            if (v != null)
+                veiculo = v;
+        }
+    }
+
+    async Task Salvar()
+    {
+        if (id == 0)
+            await Api.Create(veiculo);
+        else
+            await Api.Update(id, veiculo);
+
+        Nav.NavigateTo("/veiculos");
+    }
+
+    void Voltar() => Nav.NavigateTo("/veiculos");
+}

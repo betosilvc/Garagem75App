@@ -1,0 +1,111 @@
+﻿@page "/veiculos/detalhe/{id:int}"
+@using Garagem75.Shared.Dtos
+
+@inject VeiculoApi Api
+@inject NavigationManager Nav
+
+<h3>Detalhes do Veículo</h3>
+
+@if (veiculo == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <div class="card-detalhe">
+
+        <!-- FOTO -->
+        <div class="foto-veiculo">
+            @if (!string.IsNullOrEmpty(veiculo?.FotoUrl))
+            {
+                <img src="@($"{ApiBase}/{veiculo.FotoUrl}")" class="preview-img" />
+            }
+            else
+            {
+                <div class="sem-foto">📷 Sem foto</div>
+            }
+        </div>
+
+        <!-- INFO -->
+        <div class="info">
+            <h4>@veiculo.Fabricante @veiculo.Modelo</h4>
+            <p><strong>Placa:</strong> @veiculo.Placa</p>
+            <p><strong>Ano:</strong> @veiculo.Ano</p>
+            <p><strong>Cor:</strong> @veiculo.Cor</p>
+            <p><strong>Cliente:</strong> @veiculo.ClienteNome</p>
+        </div>
+
+        <button class="btn-primary" @onclick="Editar">Editar</button>
+
+        <h5>Foto do Veículo</h5>
+        <!-- 📸 CAPTURA + PREVIEW -->
+        <InputFile OnChange="PreviewFoto" accept="image/*" capture="environment" />
+
+        @if (!string.IsNullOrEmpty(preview))
+        {
+            <img src="@preview" class="preview-img" />
+
+            <button class="btn-primary mt-2" @onclick="SalvarFoto">
+                Salvar Foto
+            </button>
+        }
+
+    </div>
+}
+
+@code {
+    string ApiBase = "http://localhost:5244";
+    [Parameter] public int id { get; set; }
+
+    VeiculoDto? veiculo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        veiculo = await Api.GetById(id);
+    }
+
+    void Editar()
+    {
+        Nav.NavigateTo($"/veiculos/{id}");
+    }
+
+    string? preview;
+    IBrowserFile? arquivoSelecionado;
+
+    async Task PreviewFoto(InputFileChangeEventArgs e)
+    {
+        arquivoSelecionado = e.File;
+
+        var buffer = new byte[arquivoSelecionado.Size];
+        await arquivoSelecionado.OpenReadStream().ReadAsync(buffer);
+
+        preview = $"data:{arquivoSelecionado.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    async Task SalvarFoto()
+    {
+        try
+        {
+            if (arquivoSelecionado == null)
+                return;
+
+            var url = await Api.UploadFoto(id, arquivoSelecionado);
+
+            if (!string.IsNullOrEmpty(url))
+            {
+                if (veiculo != null)
+                {
+                    veiculo.FotoUrl = url;
+                }
+
+                preview = null;
+
+                StateHasChanged(); // 🔥 força atualização
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message); // 🔥 ver erro real
+        }
+    }
+}

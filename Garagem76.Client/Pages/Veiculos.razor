@@ -1,0 +1,54 @@
+﻿@page "/veiculos"
+@using Garagem75.Shared.Dtos
+@inject VeiculoApi Api
+@inject NavigationManager Nav
+
+<h3>Veículos</h3>
+
+<button class="fab" @onclick="Novo">+</button>
+
+@if (veiculos == null)
+{
+    <p>Carregando...</p>
+}
+else if (veiculos.Count == 0)
+{
+    <p>Nenhum veículo cadastrado</p>
+}
+else
+{
+    @foreach (var v in veiculos)
+    {
+        <div class="card-veiculo">
+
+            <!-- VEÍCULO (clicável) -->
+            <div class="veiculo-info" @onclick="() => AbrirVeiculo(v.IdVeiculo)">
+                <strong>@v.Fabricante @v.Modelo</strong>
+                <p>@v.Placa • @v.Ano • @v.Cor</p>
+            </div>
+
+            <!-- CLIENTE (clicável separado) -->
+            <div class="cliente-info" @onclick="() => AbrirCliente(v.ClienteId)">
+                👤 @v.ClienteNome
+            </div>
+
+        </div>
+    }
+}
+
+@code {
+    List<VeiculoDto>? veiculos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        veiculos = await Api.GetAll();
+    }
+
+    void Novo() => Nav.NavigateTo("/veiculos/novo");
+
+    void AbrirVeiculo(int id)
+        => Nav.NavigateTo($"/veiculos/detalhe/{id}");
+
+    void AbrirCliente(int id)
+        => Nav.NavigateTo($"/clientes/{id}");
+}

@@ -1,0 +1,91 @@
+﻿@page "/pecas"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+@inject PecaApi Api
+@inject NavigationManager Nav
+
+<h3>Peças</h3>
+
+<button class="fab" @onclick="Novo">+</button>
+
+@if (pecas == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <div class="filtros">
+
+        <input class="form-control" placeholder="Buscar..."
+               @bind="busca" @bind:event="oninput" />
+
+        <div class="range-box">
+            <label>Preço: R$ @precoMin - R$ @precoMax</label>
+
+            <input type="range" min="0" max="1000" step="10"
+                   @bind="precoMin" />
+
+            <input type="range" min="0" max="1000" step="10"
+                   @bind="precoMax" />
+        </div>
+
+    </div>
+
+    <div class="grid-pecas">
+        @foreach (var p in pecasFiltradas)
+        {
+            <div class="card-app" @onclick="() => Detalhe(p.IdPeca)">
+
+                <div class="img-container">
+                    <img src="@(string.IsNullOrEmpty(p.Imagem)
+                                                  ? "img/sem-imagem.png"
+                                                  : p.Imagem)"
+                         class="img-thumb" />
+
+                </div>
+
+                <div class="card-body">
+                    <strong>@p.Nome</strong>
+                    <p class="marca">@p.Marca</p>
+
+                    <span class="preco">R$ @p.Preco</span>
+
+                    <span class="badge @(p.QuantidadeEstoque < 5 ? "estoque-baixo" : "estoque-ok")">
+                        @p.QuantidadeEstoque
+                    </span>
+                </div>
+
+            </div>
+        }
+    </div>
+}
+
+@code {
+    List<PecaDto>? pecas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        pecas = await Api.GetAll();
+    }
+
+    void Novo() => Nav.NavigateTo("/pecas/novo");
+
+    void Detalhe(int id) => Nav.NavigateTo($"/pecas/{id}");
+
+    string busca = "";
+    decimal precoMin = 0;
+    decimal precoMax = 10000;
+
+    IEnumerable<PecaDto> pecasFiltradas =>
+        pecas.Where(p =>
+            (string.IsNullOrWhiteSpace(busca) ||
+             p.Nome.Contains(busca, StringComparison.OrdinalIgnoreCase) ||
+             p.Marca.Contains(busca, StringComparison.OrdinalIgnoreCase))
+            &&
+            p.Preco >= precoMin &&
+            p.Preco <= precoMax
+        );
+    
+
+    
+}
