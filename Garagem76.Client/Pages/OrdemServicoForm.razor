@@ -1,27 +1,190 @@
 ﻿@page "/os/nova"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+
 @inject OrdemServicoApi Api
+@inject ClienteApi ClienteApi
+@inject VeiculoApi VeiculoApi
 @inject NavigationManager Nav
+@inject PecaApi PecaApi
 
 <h3>Nova Ordem de Serviço</h3>
 
-<div class="form-group">
+<div class="form-app">
+
+    <!-- 👤 CLIENTE -->
+    <label>Cliente</label>
+    <select @bind="model.ClienteId" @bind:after="CarregarVeiculos">
+        <option value="0">Selecione...</option>
+
+        @foreach (var c in clientes)
+        {
+            <option value="@c.Id">@c.Nome</option>
+        }
+    </select>
+
+    <!-- 🚗 VEÍCULO -->
+    <label>Veículo</label>
+    <select @bind="model.VeiculoId">
+        <option value="0">Selecione...</option>
+        @foreach (var v in veiculos)
+        {
+            <option value="@v.IdVeiculo">
+                @v.Fabricante - @v.Modelo (@v.Placa)
+            </option>
+        }
+    </select>
+
+    <h5>Adicionar Peças</h5>
+
+    <div style="display:flex; gap:10px; margin-bottom:10px;">
+    
+        <select @bind="pecaSelecionadaId" class="form-control">
+            <option value="0">Selecione a peça</option>
+
+            @foreach (var p in pecas)
+            {
+                <option value="@p.IdPeca">@p.Nome - R$ @p.Preco</option>
+            }
+        </select>
+
+        <input type="number" min="1" @bind="quantidade" style="width:80px" />
+
+        <button class="btn btn-success" @onclick="AdicionarPeca">+</button>
+    </div>
+
+    @if (itens.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Peça</th>
+                    <th>Qtd</th>
+                    <th>Preço</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var item in itens)
+                {
+                    <tr>
+                        <td>@item.NomePeca</td>
+                        <td>@item.Quantidade</td>
+                        <td>R$ @item.PrecoUnitario</td>
+                        <td>R$ @(item.Quantidade* item.PrecoUnitario)</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => Remover(item)">
+                                X
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <!-- 🔧 DESCRIÇÃO -->
+    <label>Serviço</label>
+    <textarea @bind="model.Descricao" placeholder="Ex: troca de óleo, revisão..."></textarea>
+
+    <!-- 💰 VALORES -->
     <label>Mão de obra</label>
-    <input type="number" @bind="model.MaoDeObra" class="form-control" />
-</div>
+    <input type="number" @bind="model.MaoDeObra" />
 
-<div class="form-group">
     <label>Desconto</label>
-    <input type="number" @bind="model.ValorDesconto" class="form-control" />
-</div>
+    <input type="number" @bind="model.ValorDesconto" />
 
-<button class="btn btn-success" @onclick="Salvar">Salvar</button>
+    <!-- 🧾 OBS -->
+    <label>Observação</label>
+    <textarea @bind="model.Observacao"></textarea>
+
+    <h5>Total Peças: R$ @totalPecas</h5>
+    <h4>Total Geral: R$ @totalGeral</h4>
+
+    <button class="btn btn-success mt-3" @onclick="Salvar">
+        Criar OS
+    </button>
+
+</div>
 
 @code {
     OrdemServicoDto model = new();
 
+    List<ClienteDto> clientes = new();
+    List<VeiculoDto> veiculos = new();
+    List<PecaDto> pecas = new();
+    List<OrdemServicoPecaDto> itens = new();
+
+    int pecaSelecionadaId;
+    int quantidade = 1;
+
+    decimal totalPecas => itens.Sum(i => i.Quantidade * i.PrecoUnitario);
+    decimal totalGeral => model.MaoDeObra + totalPecas - model.ValorDesconto;
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await ClienteApi.GetAll();
+        pecas = await PecaApi.GetAll();
+    }
+
+    async Task CarregarVeiculos()
+    {
+        if (model.ClienteId == 0)
+            return;
+
+        veiculos = await VeiculoApi.GetByCliente(model.ClienteId);
+    }
+    void AdicionarPeca()
+    {
+        var peca = pecas.FirstOrDefault(p => p.IdPeca == pecaSelecionadaId);
+
+        if (peca == null || quantidade <= 0)
+            return;
+
+        var existente = itens.FirstOrDefault(i => i.PecaId == peca.IdPeca);
+
+        if (existente != null)
+        {
+            existente.Quantidade += quantidade;
+        }
+        else
+        {
+            itens.Add(new OrdemServicoPecaDto
+            {
+                PecaId = peca.IdPeca,
+                NomePeca = peca.Nome,
+                Quantidade = quantidade,
+                PrecoUnitario = peca.Preco
+            });
+        }
+
+        quantidade = 1;
+    }
+
+    void Remover(OrdemServicoPecaDto item)
+    {
+        itens.Remove(item);
+    }
+
     async Task Salvar()
     {
+        // 🔥 LIMPA OS CAMPOS EXTRAS
+        model.Pecas = model.Pecas.Select(p => new OrdemServicoPecaDto
+        {
+            PecaId = p.PecaId,
+            Quantidade = p.Quantidade
+        }).ToList();
+        model.Pecas = itens;
+        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(model)); // 👈 AQUI
+
         await Api.Create(model);
+
         Nav.NavigateTo("/os");
     }
 }

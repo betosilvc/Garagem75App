@@ -22,15 +22,25 @@ namespace Garagem75.Api.Controllers
 
         // GET
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrdemServicoDto>>> GetAll()
+        public async Task<ActionResult<List<OrdemServicoDto>>> GetAll()
         {
-            var lista = await _context.OrdemServicos
-                .Include(o => o.Veiculo)
-                .Include(o => o.PecasAssociadas)
-                    .ThenInclude(p => p.Peca)
-                .ToListAsync();
+            try
+            {
+                var lista = await _context.OrdemServicos
+                    .Include(o => o.Veiculo)
+                        .ThenInclude(v => v.Cliente)
+                    .Include(o => o.PecasAssociadas)
+                        .ThenInclude(p => p.Peca)
+                    .ToListAsync();
+                lista = lista.OrderByDescending(o => o.DataServico).ToList();
+                var resultado = _mapper.Map<List<OrdemServicoDto>>(lista);
 
-            return Ok(_mapper.Map<List<OrdemServicoDto>>(lista));
+                return Ok(resultado);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao buscar OS: {ex.Message}");
+            }
         }
 
         // GET BY ID
@@ -38,8 +48,10 @@ namespace Garagem75.Api.Controllers
         public async Task<ActionResult<OrdemServicoDto>> GetById(int id)
         {
             var os = await _context.OrdemServicos
-                .Include(o => o.PecasAssociadas)
-                    .ThenInclude(p => p.Peca)
+                .Include(o => o.Veiculo)
+                        .ThenInclude(v => v.Cliente)
+                    .Include(o => o.PecasAssociadas)
+                        .ThenInclude(p => p.Peca)
                 .FirstOrDefaultAsync(o => o.IdOrdemServico == id);
 
             if (os == null)
@@ -52,19 +64,52 @@ namespace Garagem75.Api.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(OrdemServicoDto dto)
         {
-            var entity = _mapper.Map<OrdemServico>(dto);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState); // 👈 AQUI
+            var entity = new OrdemServico
+            {
+                Descricao = dto.Descricao,
+                VeiculoId = dto.VeiculoId,
+                ClienteId = dto.ClienteId,
+                MaoDeObra = dto.MaoDeObra,
+                ValorDesconto = dto.ValorDesconto,
+                Status = "Aberta",
+                DataServico = DateTime.Now,
+                DataEntrega = DateTime.Now.AddDays(1)
+            };
 
-            entity.Status = "Aberta";
+            // 🔥 ADICIONAR PEÇAS
+            foreach (var item in dto.Pecas)
+            {
+                var peca = await _context.Pecas.FindAsync(item.PecaId);
+
+                if (peca == null) continue;
+                // 🔥 VALIDA ESTOQUE (ANTES DE USAR)
+                if (peca.QuantidadeEstoque < item.Quantidade)
+                    return BadRequest($"Estoque insuficiente para: {peca.Nome}");
+
+                // 🔥 BAIXA ESTOQUE
+                peca.QuantidadeEstoque -= item.Quantidade;
+
+
+                entity.PecasAssociadas.Add(new OrdemServicoPeca
+                {
+                    PecaId = peca.IdPeca,
+                    Quantidade = item.Quantidade,
+                    PrecoUnitario = peca.Preco
+                });
+            }
 
             // 🔥 CALCULAR TOTAL
-            entity.ValorTotal = entity.MaoDeObra - entity.ValorDesconto;
+            var totalPecas = entity.PecasAssociadas
+                .Sum(p => p.Quantidade * p.PrecoUnitario);
+
+            entity.ValorTotal = entity.MaoDeObra + totalPecas - entity.ValorDesconto;
 
             _context.OrdemServicos.Add(entity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById),
-                new { id = entity.IdOrdemServico },
-                _mapper.Map<OrdemServicoDto>(entity));
+            return Ok();
         }
 
         // PUT

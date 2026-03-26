@@ -1,0 +1,89 @@
+﻿@page "/os/editar/{id}"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+
+@inject OrdemServicoApi Api
+
+@inject PecaApi PecasApi
+
+<h3>OS #@model?.IdOrdemServico</h3>
+
+@if (model == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <p>Status: <strong>@model.Status</strong></p>
+
+    <p>Total: <span class="preco">R$ @model.ValorTotal</span></p>
+
+    <hr />
+
+    <h4>Adicionar Peça</h4>
+
+    <select @bind="pecaSelecionada">
+        @foreach (var p in pecas)
+        {
+            <option value="@p.IdPeca">@p.Nome</option>
+        }
+    </select>
+
+    <input type="number" @bind="qtd" />
+
+    <button class="btn btn-primary" @onclick="AddPeca">Adicionar</button>
+
+    <hr />
+
+    <h4>Peças</h4>
+
+    @foreach (var item in model.Pecas)
+    {
+        <div class="card-app">
+            <strong>@item.NomePeca</strong>
+            <p>Qtd: @item.Quantidade</p>
+
+            <button class="btn btn-danger"
+                    @onclick="() => Remover(item.PecaId)">
+                Remover
+            </button>
+        </div>
+    }
+
+    <button class="btn btn-success mt-3" @onclick="Finalizar">
+        Finalizar OS
+    </button>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    OrdemServicoDto? model;
+    List<PecaDto> pecas = new();
+
+    int pecaSelecionada;
+    int qtd = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        model = await Api.GetById(id);
+        pecas = await PecasApi.GetAll();
+    }
+
+    async Task AddPeca()
+    {
+        await Api.AddPeca(id, pecaSelecionada, qtd);
+        model = await Api.GetById(id);
+    }
+
+    async Task Remover(int pecaId)
+    {
+        await Api.RemovePeca(id, pecaId);
+        model = await Api.GetById(id);
+    }
+    async Task Finalizar()
+    {
+        await Api.Finalizar(id);
+        model = await Api.GetById(id);
+    }
+}

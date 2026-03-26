@@ -142,5 +142,15 @@ namespace Garagem75.Api.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("cliente/{clienteId}")]
+        public async Task<ActionResult<IEnumerable<Veiculo>>> GetByCliente(int clienteId)
+        {
+            var veiculos = await _context.Veiculos
+                .Where(v => v.ClienteId == clienteId)
+                .ToListAsync();
+
+            return Ok(veiculos);
+        }
     }
 }

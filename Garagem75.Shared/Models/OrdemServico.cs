@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Garagem75.Shared.Models;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
-
-namespace Garagem75.Shared.Models;
 
 public class OrdemServico
 {
@@ -12,37 +7,25 @@ public class OrdemServico
     public int IdOrdemServico { get; set; }
 
     [Required]
-    [StringLength(150)]
     public string Descricao { get; set; }
 
-    public DateTime DataServico { get; set; }
-    [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    [DisplayFormat(DataFormatString = "{0:N2}", ApplyFormatInEditMode = true)]
+    public DateTime DataServico { get; set; } = DateTime.Now;
+
     public decimal MaoDeObra { get; set; }
-
-    [Column(TypeName = "decimal(18,2)")]
-    [DisplayFormat(DataFormatString = "{0:N2}", ApplyFormatInEditMode = true)]
     public decimal ValorDesconto { get; set; }
-
-    [Required]
-    [Column(TypeName = "decimal(18,2)")]
     public decimal ValorTotal { get; set; }
 
-    [Required]
-    public string Status { get; set; }
-    [Required]
+    public string Status { get; set; } = "Aberta";
+
     public DateTime DataEntrega { get; set; }
 
-    // relação muitos-para-muitos com Peca
-    public ICollection<OrdemServicoPeca> PecasAssociadas { get; set; } = new List<OrdemServicoPeca>();
-
+    // 🔥 RELAÇÕES
+    public int ClienteId { get; set; }
+    public Cliente? Cliente { get; set; }
 
     public int VeiculoId { get; set; }
+    public Veiculo? Veiculo { get; set; }
 
-    public virtual Veiculo? Veiculo { get; set; }
-
-
-
-
+    public ICollection<OrdemServicoPeca> PecasAssociadas { get; set; }
+        = new List<OrdemServicoPeca>();
 }

@@ -28,6 +28,18 @@ public class Garagem75DBContext : DbContext
         modelBuilder.Entity<Usuario>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        modelBuilder.Entity<OrdemServico>()
+        .Property(p => p.MaoDeObra)
+        .HasPrecision(18, 2);
+
+        modelBuilder.Entity<OrdemServico>()
+            .Property(p => p.ValorDesconto)
+            .HasPrecision(18, 2);
+
+        modelBuilder.Entity<OrdemServico>()
+            .Property(p => p.ValorTotal)
+            .HasPrecision(18, 2);
         // Configuração da Chave Composta para OrdemServicoPeca
         modelBuilder.Entity<OrdemServicoPeca>()
             .HasKey(osp => new { osp.OrdemServicoId, osp.PecaId });

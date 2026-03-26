@@ -48,6 +48,13 @@ public class VeiculoApi
         return result?.fotoUrl;
     }
 
+    public async Task<List<VeiculoDto>> GetByCliente(int clienteId)
+    {
+        return await _http.GetFromJsonAsync<List<VeiculoDto>>(
+            $"api/veiculo/cliente/{clienteId}"
+        ) ?? new();
+    }
+
     public class UploadResult
     {
         public string? fotoUrl { get; set; }

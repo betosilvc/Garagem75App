@@ -21,4 +21,15 @@ public class OrdemServicoApi
 
     public async Task Finalizar(int id)
         => await _http.PutAsync($"api/ordemservico/{id}/finalizar", null);
+
+    public async Task AddPeca(int osId, int pecaId, int quantidade)
+    {
+        await _http.PostAsJsonAsync($"api/ordemservico/{osId}/add-peca",
+            new { pecaId, quantidade });
+    }
+
+    public async Task RemovePeca(int osId, int pecaId)
+    {
+        await _http.DeleteAsync($"api/ordemservico/{osId}/remove-peca/{pecaId}");
+    }
 }

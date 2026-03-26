@@ -4,32 +4,61 @@
 
 <h3>Ordens de Serviço</h3>
 
-<button class="btn btn-primary" @onclick="Nova">+ Nova OS</button>
+@if (loading)
+{
+    <p>Carregando...</p>
+}
+else if (items.Count == 0)
+{
+    <p>Nenhuma OS encontrada</p>
+}
+else
+{
+    <div class="os-grid">
+        @foreach (var os in items)
+        {
+            <div class="os-card" @onclick="() => Abrir(os.IdOrdemServico)">
+                
+                <div class="os-header">
+                    <strong>#@os.IdOrdemServico</strong>
+                    <span class="status @os.Status?.ToLower()">@os.Status</span>
+                </div>
 
-<div class="grid-pecas">
-    @foreach (var os in lista)
-    {
-        <div class="card-app" @onclick="() => Detalhe(os.IdOrdemServico)">
+                <div class="os-body">
+                    <p><b>Cliente:</b> @os.NomeCliente</p>
+                    <p><b>Veículo:</b> @os.VeiculoModelo</p>
+                    <p><b>Descrição:</b> @os.Descricao</p>
+                    <p><b>Data:</b> @os.DataServico.ToString("dd/MM/yyyy")</p>
+                </div>
 
-            <strong>OS #@os.IdOrdemServico</strong>
+                <div class="os-footer">
+                    <span>Total:</span>
+                    <strong>R$ @CalcularTotal(os)</strong>
+                </div>
 
-            <p>Status: @os.Status</p>
-
-            <span class="preco">R$ @os.ValorTotal</span>
-
-        </div>
-    }
-</div>
+            </div>
+        }
+    </div>
+}
 
 @code {
-    List<OrdemServicoDto> lista = new();
+    List<OrdemServicoDto> items = new();
+    bool loading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        lista = await Api.GetAll();
+        items = await Api.GetAll();
+        loading = false;
     }
 
-    void Nova() => Nav.NavigateTo("/os/nova");
+    void Abrir(int id)
+    {
+        Nav.NavigateTo($"/os/{id}");
+    }
 
-    void Detalhe(int id) => Nav.NavigateTo($"/os/{id}");
+    decimal CalcularTotal(OrdemServicoDto os)
+    {
+        var totalPecas = os.Pecas.Sum(p => p.PrecoUnitario * p.Quantidade);
+        return os.MaoDeObra + totalPecas - os.ValorDesconto;
+    }
 }

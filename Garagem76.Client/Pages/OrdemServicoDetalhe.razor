@@ -1,11 +1,5 @@
 ﻿@page "/os/{id:int}"
 @using Garagem75.Shared.Dtos
-@using Garagem76.Client.Services
-
-@inject OrdemServicoApi Api
-@inject OrdemServicoPecaApi PecaApi
-@inject PecaApi PecasApi
-
 <h3>OS #@model?.IdOrdemServico</h3>
 
 @if (model == null)
@@ -14,77 +8,58 @@
 }
 else
 {
-    <p>Status: <strong>@model.Status</strong></p>
+    <div class="card-detalhe">
 
-    <p>Total: <span class="preco">R$ @model.ValorTotal</span></p>
+        <p><strong>Status:</strong> @model.Status</p>
+        <p><strong>Cliente:</strong> @model.NomeCliente</p>
+        <p><strong>Veículo:</strong> @model.VeiculoModelo</p>
 
-    <hr />
+        <p><strong>Serviço:</strong></p>
+        <p>@model.Descricao</p>
 
-    <h4>Adicionar Peça</h4>
+        <p><strong>Mão de obra:</strong> R$ @model.MaoDeObra</p>
+        <p><strong>Desconto:</strong> R$ @model.ValorDesconto</p>
 
-    <select @bind="pecaSelecionada">
-        @foreach (var p in pecas)
-        {
-            <option value="@p.IdPeca">@p.Nome</option>
-        }
-    </select>
+        <p>
+            <strong>Total:</strong>
+            <span class="preco">R$ @model.ValorTotal</span>
+        </p>
 
-    <input type="number" @bind="qtd" />
+        <button class="btn btn-primary mt-3"
+                @onclick="IrParaEdicao">
+            ✏️ Editar OS
+        </button>
 
-    <button class="btn btn-primary" @onclick="AddPeca">Adicionar</button>
-
-    <hr />
-
-    <h4>Peças</h4>
-
-    @foreach (var item in model.Pecas)
-    {
-        <div class="card-app">
-            <strong>@item.NomePeca</strong>
-            <p>Qtd: @item.Quantidade</p>
-
-            <button class="btn btn-danger"
-                    @onclick="() => Remover(item.PecaId)">
-                Remover
-            </button>
-        </div>
-    }
-
-    <button class="btn btn-success mt-3" @onclick="Finalizar">
-        Finalizar OS
-    </button>
+    </div>
 }
 
 @code {
     [Parameter] public int id { get; set; }
 
     OrdemServicoDto? model;
-    List<PecaDto> pecas = new();
 
-    int pecaSelecionada;
-    int qtd = 1;
+    [Inject] OrdemServicoApi Api { get; set; }
+    [Inject] NavigationManager Nav { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        model = await Api.GetById(id);
-        pecas = await PecasApi.GetAll();
+        try
+        {
+            model = await Api.GetById(id);
+
+            if (model == null)
+            {
+                Console.WriteLine("OS não encontrada");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Erro ao carregar OS: " + ex.Message);
+        }
     }
 
-    async Task AddPeca()
+    void IrParaEdicao()
     {
-        await PecaApi.Add(id, pecaSelecionada, qtd);
-        model = await Api.GetById(id); // 🔥 recarrega
-    }
-
-    async Task Remover(int pecaId)
-    {
-        await PecaApi.Remove(id, pecaId);
-        model = await Api.GetById(id);
-    }
-
-    async Task Finalizar()
-    {
-        await Api.Finalizar(id);
-        model = await Api.GetById(id);
+        Nav.NavigateTo($"/os/editar/{id}");
     }
 }
