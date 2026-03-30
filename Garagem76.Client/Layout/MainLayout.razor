@@ -1,12 +1,28 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
 
 <div class="app-container">
+
+    <!-- 🔥 TOPO COM USUÁRIO -->
+    <div style="padding:10px; background:#eee;">
+        <AuthorizeView>
+            <Authorized>
+                <span>👤 @context.User.Identity?.Name</span>
+                <button class="btn btn-sm btn-danger" @onclick="Logout">Sair</button>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
     <div class="content">
         @Body
     </div>
 
     <nav class="bottom-nav">
+
+        <!-- 👥 TODOS -->
         <a href="/clientes" class="nav-item @(IsActive("/clientes") ? "active" : "")">
             <span class="icon">👤</span>
             <small>Clientes</small>
@@ -17,21 +33,38 @@
             <small>Veículos</small>
         </a>
 
-        <a href="/pecas" class="nav-item @(IsActive("/pecas") ? "active" : "")">
-            <span class="icon">🔧</span>
-            <small>Peças</small>
+        <!-- 👑 SOMENTE ADMIN -->
+        <AuthorizeView Roles="Administrador">
+            <a href="/pecas" class="nav-item @(IsActive("/pecas") ? "active" : "")">
+                <span class="icon">🔧</span>
+                <small>Peças</small>
+            </a>
+        </AuthorizeView>
 
-        </a>
-        <a href="/os" class="nav-item @(IsActive("/os") ? "active" : "")">
-            <span class="icon">🛠️</span>
-            <small>Ordem de Serviço</small>
-        </a>
+        <!-- 👑 + 🔧 -->
+        <AuthorizeView Roles="Administrador,Mecanico">
+            <a href="/os" class="nav-item @(IsActive("/os") ? "active" : "")">
+                <span class="icon">🛠️</span>
+                <small>Ordem de Serviço</small>
+            </a>
+        </AuthorizeView>
+
     </nav>
 </div>
 
 @code {
+
     bool IsActive(string url)
     {
         return Nav.Uri.Contains(url);
+    }
+
+    async Task Logout()
+    {
+        // 🔥 remove token
+        await JS.InvokeVoidAsync("localStorage.removeItem", "token");
+
+        // 🔥 volta pro login
+        Nav.NavigateTo("/login", true);
     }
 }

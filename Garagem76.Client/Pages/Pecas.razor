@@ -1,6 +1,8 @@
 ﻿@page "/pecas"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
 @inject PecaApi Api
 @inject NavigationManager Nav
 

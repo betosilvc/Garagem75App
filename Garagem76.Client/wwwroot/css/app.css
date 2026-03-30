@@ -469,9 +469,9 @@ code {
     border: 1px solid #ddd;
 }
 
-.os-card:hover {
+/*.os-card:hover {
     transform: scale(1.02);
-}
+}*/
 
     /* ✨ ANIMAÇÃO */
     .card-app:active {
@@ -1031,20 +1031,6 @@ code {
     }
 }*/
 
-.os-card {
-    background: white;
-    color: #222;
-    padding: 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-    border: 1px solid #ddd;
-}
-
-    .os-card:hover {
-        transform: scale(1.02);
-    }
-
 /* ✨ ANIMAÇÃO */
 .card-app:active {
     transform: scale(0.97);
@@ -1125,20 +1111,6 @@ code {
     margin-top: 10px;
 }
 
-.os-card {
-    background: white;
-    color: #222;
-    padding: 14px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: 0.2s;
-    border: 1px solid #ddd;
-}
-
-    .os-card:hover {
-        transform: scale(1.02);
-    }
-
 .os-header {
     display: flex;
     justify-content: space-between;
@@ -1185,3 +1157,33 @@ button {
     button:hover {
         transform: scale(1.03);
     }
+
+.splash-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #FFD600; /* amarelo da sua logo */
+}
+
+.logo {
+    width: 200px;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.login-actions {
+    text-align: center;
+    margin-top: 10px;
+}

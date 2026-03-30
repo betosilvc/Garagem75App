@@ -1,0 +1,30 @@
+﻿@page "/splash"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+
+<div class="splash-container">
+        <img src="images/logo.png" class="logo"/>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(2500); // tempo da animação
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // 🔥 usuário logado
+            Nav.NavigateTo("/dashboard");
+        }
+        else
+        {
+            // 🔥 usuário não logado
+            Nav.NavigateTo("/login");
+        }
+    }
+}

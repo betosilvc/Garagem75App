@@ -1,7 +1,9 @@
 ﻿@page "/clientes/novo"
 @page "/clientes/{id:int}"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @inject HttpClient Http
 @using Garagem75.Shared.Models
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using Garagem75.Shared.Dtos
 @using System.Net.Http.Json;

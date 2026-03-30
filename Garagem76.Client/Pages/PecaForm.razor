@@ -1,7 +1,9 @@
 ﻿@page "/pecas/novo"
 @page "/pecas/editar/{id:int}"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
 @inject HttpClient Http
 @inject PecaApi Api
 @inject NavigationManager Nav

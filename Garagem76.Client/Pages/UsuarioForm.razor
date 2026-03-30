@@ -1,0 +1,69 @@
+﻿@page "/usuarios/novo"
+@attribute [Authorize(Roles = "Administrador")]
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@inject UsuarioApi Api
+@inject TipoUsuarioApi TipoApi
+@inject NavigationManager Nav
+
+<h3>Novo Usuário</h3>
+
+<EditForm Model="usuario" OnValidSubmit="Salvar">
+    <DataAnnotationsValidator />
+
+    <div class="form-grid">
+
+        <div class="input-group">
+            <label>Nome</label>
+            <InputText class="input" @bind-Value="usuario.Nome" />
+        </div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <InputText class="input" @bind-Value="usuario.Email" />
+        </div>
+
+        <div class="input-group">
+            <label>Senha</label>
+            <InputText class="input" type="password" @bind-Value="usuario.Senha" />
+        </div>
+
+        <div class="input-group">
+            <label>Tipo Usuário</label>
+            <select class="input" @bind="usuario.TipoUsuarioId">
+                <option value="0">Selecione</option>
+                @foreach (var tipo in tipos)
+                {
+                    <option value="@tipo.IdTipoUsuario">
+                        @tipo.DescricaoTipoUsuario
+                    </option>
+                }
+            </select>
+        </div>
+
+    </div>
+
+    <button class="btn btn-success">Salvar</button>
+</EditForm>
+
+@code {
+    UsuarioDto usuario = new();
+    List<TipoUsuarioDto> tipos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        tipos = await TipoApi.GetAll();
+    }
+
+    async Task Salvar()
+    {
+        if (usuario.TipoUsuarioId == 0)
+        {
+            Console.WriteLine("Tipo de usuário não selecionado");
+            return;
+        }
+        await Api.Create(usuario);
+        Nav.NavigateTo("/login");
+    }
+}

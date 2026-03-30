@@ -1,6 +1,9 @@
 using AutoMapper;
 using Garagem75.Api.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,14 +21,35 @@ builder.Services.AddSwaggerGen();
 //  Cors
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("blazor",
+    options.AddPolicy("liberado",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5135")
+            policy.AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
 });
+
+var key = "GARAGEM75_CHAVE_ULTRA_SECRETA_COM_64_CARACTERES_1234567890"; // depois colocamos no appsettings
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+    };
+});
+
+builder.Services.AddAuthorization();
 
 // 🔥 AUTOMAPPER
 builder.Services.AddAutoMapper(typeof(Program));
@@ -46,8 +70,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseCors("blazor");
+app.UseCors("liberado");
     
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

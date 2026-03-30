@@ -4,6 +4,11 @@ using Garagem75.Shared.Dtos;
 using Garagem75.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Garagem75.Api.Controllers
 {
@@ -20,17 +25,23 @@ namespace Garagem75.Api.Controllers
             _mapper = mapper;
         }
 
+        //[Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll()
         {
-            var lista = await _context.Usuarios.ToListAsync();
+            var lista = await _context.Usuarios
+                .Include(u => u.TipoUsuario)
+                .ToListAsync();
+
             return Ok(_mapper.Map<List<UsuarioDto>>(lista));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<UsuarioDto>> GetById(int id)
         {
-            var item = await _context.Usuarios.FindAsync(id);
+            var item = await _context.Usuarios
+                .Include(u => u.TipoUsuario)
+                .FirstOrDefaultAsync(u => u.IdUsuario == id);
 
             if (item == null)
                 return NotFound();
@@ -82,6 +93,48 @@ namespace Garagem75.Api.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpPost("login")]
+        public async Task<ActionResult> Login([FromBody] LoginDto login)
+        {
+
+            Console.WriteLine($"EMAIL: '{login.Email}'");
+            Console.WriteLine($"SENHA: '{login.Senha}'");
+            var user = await _context.Usuarios
+    .Include(u => u.TipoUsuario)
+    .FirstOrDefaultAsync(u =>
+        u.Email.ToLower().Trim() == login.Email.ToLower().Trim() &&
+        u.Senha.Trim() == login.Senha.Trim() &&
+        u.Ativo);
+
+            if (user == null)
+                return Unauthorized("Usuário ou senha inválidos");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("GARAGEM75_CHAVE_ULTRA_SECRETA_COM_64_CARACTERES_1234567890"));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.Name, user.Nome),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.TipoUsuario.DescricaoTipoUsuario)
+    };
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddHours(2),
+                signingCredentials: creds
+            );
+
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return Ok(new
+            {
+                token = tokenString,
+                nome = user.Nome,
+                tipo = user.TipoUsuario.DescricaoTipoUsuario
+            });
         }
     }
 }

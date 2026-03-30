@@ -49,7 +49,7 @@ namespace Garagem75.Api.Controllers
         {
             var os = await _context.OrdemServicos
                 .Include(o => o.Veiculo)
-                        .ThenInclude(v => v.Cliente)
+                        .ThenInclude(o => o.Cliente)
                     .Include(o => o.PecasAssociadas)
                         .ThenInclude(p => p.Peca)
                 .FirstOrDefaultAsync(o => o.IdOrdemServico == id);

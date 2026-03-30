@@ -1,6 +1,8 @@
 ﻿@page "/veiculos/novo"
 @page "/veiculos/{id:int}"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
+@using Microsoft.AspNetCore.Authorization
 
 @inject VeiculoApi Api
 @inject ClienteApi ClienteApi

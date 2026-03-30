@@ -1,8 +1,12 @@
 ﻿@page "/os"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @inject OrdemServicoApi Api
 @inject NavigationManager Nav
 
 <h3>Ordens de Serviço</h3>
+
+<button class="fab" @onclick="Novo">+</button>
 
 @if (loading)
 {
@@ -50,6 +54,7 @@ else
         items = await Api.GetAll();
         loading = false;
     }
+    void Novo() => Nav.NavigateTo("/os/nova");
 
     void Abrir(int id)
     {

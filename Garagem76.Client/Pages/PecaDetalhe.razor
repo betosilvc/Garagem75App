@@ -1,6 +1,8 @@
 ﻿@page "/pecas/{id:int}"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
 @inject IJSRuntime JS
 @inject PecaApi Api
 @inject NavigationManager Nav
@@ -27,9 +29,10 @@ else
                 @peca.QuantidadeEstoque
             </span>
         </p>
-
-        <button class="btn btn-primary" @onclick="Editar">Editar</button>
-        <button class="btn btn-danger" @onclick="Excluir">Excluir</button>
+        <div class=" acoes">
+            <button class="btn btn-primary mt-3" @onclick="Editar">Editar</button>
+            <button class="btn btn-danger mt-3" @onclick="Excluir">Excluir</button>
+        </div>
     </div>
 }
 

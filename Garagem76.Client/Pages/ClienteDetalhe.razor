@@ -1,5 +1,7 @@
 ﻿@page "/clientes/{id:int}/detalhe"
+@attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
+@using Microsoft.AspNetCore.Authorization
 @inject IJSRuntime JS
 @inject ClienteApi ClienteApi
 @inject VeiculoApi VeiculoApi

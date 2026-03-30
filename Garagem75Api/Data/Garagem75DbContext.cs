@@ -55,6 +55,19 @@ public class Garagem75DBContext : DbContext
             .HasOne(osp => osp.Peca)
             .WithMany() // A Peca pode não ter uma propriedade de navegação de volta para OrdemServicoPeca se não for necessária
             .HasForeignKey(osp => osp.PecaId);
+
+        modelBuilder.Entity<TipoUsuario>().HasData(
+        new TipoUsuario
+        {
+            IdTipoUsuario = 1,
+            DescricaoTipoUsuario = "Administrador"
+        },
+        new TipoUsuario
+        {
+            IdTipoUsuario = 2,
+            DescricaoTipoUsuario = "Mecânico"
+        }
+        );
     }
 
 }

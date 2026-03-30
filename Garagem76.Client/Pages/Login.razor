@@ -1,0 +1,74 @@
+﻿@page "/login"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject UsuarioApi Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthProvider
+@attribute [AllowAnonymous]
+
+<h3>Login</h3>
+
+<div class="login-container">
+
+    <InputText class="input" placeholder="Email"
+               @bind-Value="email" />
+
+    <InputText class="input" type="password"
+               placeholder="Senha"
+               @bind-Value="senha" />
+
+    <button type="button" class="btn btn-primary" @onclick="FazerLogin">
+        Entrar
+    </button>
+    <p class="muted">Não tem conta?</p>
+
+    <button class="btn btn-outline-primary" @onclick="IrParaCadastro">
+        Criar conta
+    </button>
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <p class="text-danger">@erro</p>
+    }
+
+</div>
+
+@code {
+    string email = "";
+    string senha = "";
+    string? erro;
+
+    async Task FazerLogin()
+    {
+        erro = null;
+
+        var token = await Api.Login(email.Trim(), senha.Trim());
+
+        if (string.IsNullOrEmpty(token))
+        {
+            erro = "Login inválido";
+            return;
+        }
+
+        await JS.InvokeVoidAsync("localStorage.setItem", "token", token);
+
+        var auth = (AuthStateProvider)AuthProvider;
+        await auth.NotifyUserAuthentication(token);
+
+        // 🔥 TESTE AQUI
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        Console.WriteLine("Autenticado: " + user.Identity?.IsAuthenticated);
+
+        Nav.NavigateTo("/clientes", true); // 🔥 ESSENCIAL
+    }
+
+    void IrParaCadastro()
+    {
+        Nav.NavigateTo("/usuarios/novo");
+    }
+}
