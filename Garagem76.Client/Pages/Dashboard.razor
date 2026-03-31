@@ -1,0 +1,59 @@
+﻿@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@inject DashboardApi Api
+@inject IJSRuntime JS
+
+<h3>Dashboard</h3>
+
+<div class="dashboard">
+
+    <!-- 💰 FATURAMENTO -->
+    <div class="card destaque">
+        <h4>Faturamento Hoje</h4>
+        <h2>R$ @faturamento</h2>
+    </div>
+
+    <!-- 🚗 FABRICANTES -->
+    <div class="card">
+        <h4>Fabricantes</h4>
+        <canvas id="chartFabricantes"></canvas>
+    </div>
+
+    <!-- 🔧 PEÇAS -->
+    <div class="card">
+        <h4>Marcas de Peças</h4>
+        <canvas id="chartPecas"></canvas>
+    </div>
+
+</div>
+
+@code {
+
+    decimal faturamento;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        faturamento = await Api.GetFaturamentoDia();
+
+        var fabricantes = await Api.GetFabricantes();
+        var pecas = await Api.GetMarcasPecas();
+
+        await JS.InvokeVoidAsync("garagemCharts.criarBarChart",
+            "chartFabricantes",
+            fabricantes.Select(x => x.Nome),
+            fabricantes.Select(x => x.Total),
+            "Fabricantes");
+
+        await JS.InvokeVoidAsync("garagemCharts.criarBarChart",
+            "chartPecas",
+            pecas.Select(x => x.Nome),
+            pecas.Select(x => x.Total),
+            "Peças");
+
+        StateHasChanged();
+    }
+}

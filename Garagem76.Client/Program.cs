@@ -3,6 +3,7 @@ using Garagem76.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.Authorization;
 
+
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.RootComponents.Add<App>("#app");
@@ -17,6 +18,9 @@ builder.Services.AddScoped(sp =>
 
     return client;
 });
+
+
+
 builder.Services.AddAuthorizationCore();
 
 builder.Services.AddScoped<ClienteApi>();
@@ -30,7 +34,12 @@ builder.Services.AddScoped<OrdemServicoApi>();
 builder.Services.AddScoped<TipoUsuarioApi>();
 
 builder.Services.AddScoped<UsuarioApi>();
+
+builder.Services.AddScoped<DashboardApi>();
+
+
 builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 
+var app = builder.Build();
 
-await builder.Build().RunAsync();
+await app.RunAsync();
