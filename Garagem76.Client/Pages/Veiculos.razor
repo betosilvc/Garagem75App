@@ -19,23 +19,25 @@ else if (veiculos.Count == 0)
 }
 else
 {
-    @foreach (var v in veiculos)
-    {
-        <div class="card-veiculo">
+    <div class="grid-app">
+        @foreach (var v in veiculos)
+        {
+            <div class="card-veiculo">
 
-            <!-- VEÍCULO (clicável) -->
-            <div class="veiculo-info" @onclick="() => AbrirVeiculo(v.IdVeiculo)">
-                <strong>@v.Fabricante @v.Modelo</strong>
-                <p>@v.Placa • @v.Ano • @v.Cor</p>
+                <!-- VEÍCULO (clicável) -->
+                <div class="veiculo-info" @onclick="() => AbrirVeiculo(v.IdVeiculo)">
+                    <strong>@v.Fabricante @v.Modelo</strong>
+                    <p>@v.Placa • @v.Ano • @v.Cor</p>
+                </div>
+
+                <!-- CLIENTE (clicável separado) -->
+                <div class="cliente-info" @onclick="() => AbrirCliente(v.ClienteId)">
+                    👤 @v.ClienteNome
+                </div>
+
             </div>
-
-            <!-- CLIENTE (clicável separado) -->
-            <div class="cliente-info" @onclick="() => AbrirCliente(v.ClienteId)">
-                👤 @v.ClienteNome
-            </div>
-
-        </div>
-    }
+        }
+    </div>
 }
 
 @code {

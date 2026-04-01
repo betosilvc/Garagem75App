@@ -21,6 +21,7 @@ else if (clientes?.Count == 0)
 }
 else
 {
+    <div class="grid-app">
     @foreach (var c in clientes)
     {
         <div class="card card-click" @onclick="() => VerDetalhe(c.Id)">
@@ -35,6 +36,7 @@ else
             </div>
         </div>
     }
+    </div>
 }
 
 @if (mostrarModal)

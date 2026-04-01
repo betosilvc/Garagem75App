@@ -1,0 +1,112 @@
+﻿@page "/usuarios"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrador")]
+
+@inject UsuarioApi Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3 class="title">Usuários</h3>
+
+@if (loading)
+{
+    <div class="loading">Carregando usuários...</div>
+}
+else if (!usuarios.Any())
+{
+    <div class="empty">
+        <p>Nenhum usuário encontrado</p>
+        <button class="btn-primary" @onclick="Novo">Criar primeiro usuário</button>
+    </div>
+}
+else
+{
+    <div class="grid-app">
+        @foreach (var u in usuarios)
+        {
+            <div class="card-app user-card" @onclick="() => IrDetalhe(u.IdUsuario)">
+                
+
+                <!-- HEADER -->
+                <div class="card-header">
+                    <div class="avatar">@u.Nome.Substring(0, 1).ToUpper()</div>
+
+                    <div class="title">
+                        <strong>@u.Nome</strong>
+                        <span class="email">@u.Email</span>
+                    </div>
+
+                    <span class="status @(u.Ativo ? "ativo" : "inativo")">
+                        @(u.Ativo ? "Ativo" : "Inativo")
+                    </span>
+                </div>
+
+                <!-- BODY -->
+                <div class="card-body">
+                    <span class="tag">@u.TipoUsuario?.DescricaoTipoUsuario</span>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="card-actions">
+                    <button class="btn-edit" @onclick="() => Editar(u.IdUsuario)">✏️</button>
+                    <button class="btn-delete" @onclick="() => Excluir(u.IdUsuario)">🗑️</button>
+                </div>
+
+            </div>
+        }
+    </div>
+}
+
+<!-- FAB botão flutuante -->
+<button class="fab" @onclick="Novo">＋</button>
+
+@code {
+    private List<UsuarioDto> usuarios = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+        => await Carregar();
+
+    private async Task Carregar()
+    {
+        loading = true;
+
+        try
+        {
+            usuarios = (await Api.GetAll()) ?? new();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    void Novo() => Nav.NavigateTo("/usuarios/novo");
+
+    void Editar(int id) => Nav.NavigateTo($"/usuarios/{id}");
+
+    async Task Excluir(int id)
+    {
+        var confirmar = await JS.InvokeAsync<bool>("confirm", "Deseja realmente excluir este usuário?");
+
+        if (!confirmar)
+            return;
+
+        await Api.Delete(id);
+
+        await Carregar();
+    }
+
+    async Task ToggleAtivo(UsuarioDto u)
+    {
+        u.Ativo = !u.Ativo;
+        await Api.Update(u.IdUsuario, u);
+    }
+
+    void IrDetalhe(int id)
+    {
+        Nav.NavigateTo($"/usuarios/{id}");
+    }
+}

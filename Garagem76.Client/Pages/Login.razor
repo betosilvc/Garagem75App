@@ -25,9 +25,9 @@
     </button>
     <p class="muted">Não tem conta?</p>
 
-    <button class="btn btn-outline-primary" @onclick="IrParaCadastro">
+    @* <button class="btn btn-outline-primary" @onclick="IrParaCadastro">
         Criar conta
-    </button>
+    </button> *@
 
     @if (!string.IsNullOrEmpty(erro))
     {
@@ -64,7 +64,7 @@
 
         Console.WriteLine("Autenticado: " + user.Identity?.IsAuthenticated);
 
-        Nav.NavigateTo("/clientes", true); // 🔥 ESSENCIAL
+        Nav.NavigateTo("/dashboard", true); // 🔥 ESSENCIAL
     }
 
     void IrParaCadastro()

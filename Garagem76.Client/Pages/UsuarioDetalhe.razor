@@ -1,0 +1,110 @@
+﻿@page "/usuarios/{id:int}"
+@using Garagem75.Shared.Dtos
+@using Garagem76.Client.Services
+
+@inject UsuarioApi Api
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (loading)
+{
+    <div class="loading">Carregando...</div>
+}
+else if (usuario == null)
+{
+    <p>Usuário não encontrado</p>
+}
+else
+{
+    <div class="detalhe-container">
+
+        <!-- HEADER -->
+        <div class="detalhe-header">
+            <div class="avatar">
+                @usuario.Nome.Substring(0, 1)
+            </div>
+
+            <div>
+                <h2>@usuario.Nome</h2>
+
+                <span class="badge @(usuario.Ativo ? "ativo" : "inativo")">
+                    @(usuario.Ativo ? "Ativo" : "Inativo")
+                </span>
+            </div>
+        </div>
+
+        <!-- INFO -->
+        <div class="detalhe-card">
+            <p><strong>Email</strong></p>
+            <span>@usuario.Email</span>
+        </div>
+
+        <!-- AÇÕES -->
+        <div class="acoes">
+
+            <button class="btn-editar" @onclick="Editar">
+                ✏️ Editar
+            </button>
+
+            @if (usuario.Ativo)
+            {
+                <button class="btn-excluir" @onclick="Desativar">
+                    🗑️ Desativar
+                </button>
+            }
+            else
+            {
+                <button class="btn-reativar" @onclick="Reativar">
+                    ♻️ Reativar
+                </button>
+            }
+
+        </div>
+
+    </div>
+}
+
+
+    @code {
+        [Parameter] public int id { get; set; }
+
+        UsuarioDto? usuario;
+        bool loading = true;
+
+        protected override async Task OnInitializedAsync()
+        {
+            try
+            {
+                usuario = await Api.GetById(id);
+            }
+            catch
+            {
+                usuario = null;
+            }
+            finally
+            {
+                loading = false;
+            }
+        }
+
+        void Editar()
+        {
+            Nav.NavigateTo($"/usuarios/{id}");
+        }
+
+        async Task Desativar()
+        {
+            var ok = await JS.InvokeAsync<bool>("confirm", "Deseja desativar?");
+            if (!ok) return;
+
+            await Api.Delete(id);
+            Nav.NavigateTo("/usuarios");
+        }
+
+        async Task Reativar()
+        {
+            await Api.Reativar(id); // precisa ter na API
+            Nav.NavigateTo("/usuarios");
+        }
+    }
+}

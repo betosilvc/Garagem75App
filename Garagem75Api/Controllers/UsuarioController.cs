@@ -25,16 +25,19 @@ namespace Garagem75.Api.Controllers
             _mapper = mapper;
         }
 
-        //[Authorize]
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll()
         {
             var lista = await _context.Usuarios
                 .Include(u => u.TipoUsuario)
+                .Where(u => u.Ativo) // 🔥 IMPORTANTE
                 .ToListAsync();
 
             return Ok(_mapper.Map<List<UsuarioDto>>(lista));
         }
+
+        [Authorize(Roles = "Administrador")]
 
         [HttpGet("{id}")]
         public async Task<ActionResult<UsuarioDto>> GetById(int id)
@@ -48,6 +51,7 @@ namespace Garagem75.Api.Controllers
 
             return Ok(_mapper.Map<UsuarioDto>(item));
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpPost]
         public async Task<ActionResult> Create(UsuarioDto dto)
@@ -62,6 +66,7 @@ namespace Garagem75.Api.Controllers
             return CreatedAtAction(nameof(GetById),
                 new { id = result.IdUsuario }, result);
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UsuarioDto dto)
@@ -80,6 +85,7 @@ namespace Garagem75.Api.Controllers
 
             return NoContent();
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -89,7 +95,8 @@ namespace Garagem75.Api.Controllers
             if (entity == null)
                 return NotFound();
 
-            _context.Usuarios.Remove(entity);
+            entity.Ativo = false; // 🔥 NÃO DELETA MAIS
+
             await _context.SaveChangesAsync();
 
             return NoContent();
