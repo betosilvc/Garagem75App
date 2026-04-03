@@ -101,6 +101,22 @@ namespace Garagem75.Api.Controllers
 
             return NoContent();
         }
+        [Authorize(Roles = "Administrador")]
+
+        [HttpPut("{id}/reativar")]
+        public async Task<IActionResult> Reativar(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+
+            if (usuario == null)
+                return NotFound();
+
+            usuario.Ativo = true;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
 
         [HttpPost("login")]
         public async Task<ActionResult> Login([FromBody] LoginDto login)

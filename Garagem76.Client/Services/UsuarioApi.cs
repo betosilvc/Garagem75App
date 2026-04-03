@@ -66,8 +66,16 @@ namespace Garagem76.Client.Services
 
         public async Task Reativar(int id)
         {
-            var response = await _http.PutAsync($"api/usuario/{id}/reativar", null);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var response = await _http.PutAsync($"api/usuario/{id}/reativar", null);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Erro ao reativar: " + ex.Message);
+                throw;
+            }
         }
 
         public async Task<string?> Login(string email, string senha)

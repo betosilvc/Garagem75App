@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Dtos\AnoDto.cs" />
+    <Compile Remove="Dtos\MarcaDto.cs" />
+    <Compile Remove="Dtos\ModeloDto.cs" />
+  </ItemGroup>
+
 </Project>

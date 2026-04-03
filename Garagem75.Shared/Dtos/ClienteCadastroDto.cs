@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Garagem75.Shared.Dtos
 {
-     class ClienteCadastroDto
+     public class ClienteCadastroDto
     {
-        public Cliente Cliente { get; set; } = new Cliente();
-        public Endereco Endereco { get; set; } = new Endereco();
-        public Veiculo Veiculo { get; set; } = new Veiculo();
+        public ClienteDto Cliente { get; set; } = new();
+        public EnderecoDto Endereco { get; set; } = new();
+        public VeiculoDto Veiculo { get; set; } = new();
     }
 }

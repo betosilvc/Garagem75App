@@ -2,7 +2,7 @@ using Garagem76.Client;
 using Garagem76.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.Authorization;
-
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -36,6 +36,7 @@ builder.Services.AddScoped<TipoUsuarioApi>();
 builder.Services.AddScoped<UsuarioApi>();
 
 builder.Services.AddScoped<DashboardApi>();
+
 
 
 builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
