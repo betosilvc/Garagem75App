@@ -83,12 +83,24 @@ namespace Garagem75.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var entity = await _context.Clientes.FindAsync(id);
+            // Carrega o cliente incluindo os endereços (e veículos se houver)
+            var entity = await _context.Clientes
+                .Include(c => c.Enderecos)
+                // .Include(c => c.Veiculos) // Se houver veículos, inclua aqui também
+                .FirstOrDefaultAsync(c => c.IdCliente == id);
 
             if (entity == null)
                 return NotFound();
 
+            // Remove os endereços vinculados primeiro
+            if (entity.Enderecos != null && entity.Enderecos.Any())
+            {
+                _context.Enderecos.RemoveRange(entity.Enderecos);
+            }
+
+            // Agora remove o cliente
             _context.Clientes.Remove(entity);
+
             await _context.SaveChangesAsync();
 
             return NoContent();

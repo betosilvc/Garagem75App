@@ -9,6 +9,6 @@ namespace Garagem75.Shared.Dtos
     {
         public ClienteDto Cliente { get; set; } = new();
         public EnderecoDto Endereco { get; set; } = new();
-        public VeiculoDto Veiculo { get; set; } = new();
+       // public VeiculoDto Veiculo { get; set; } = new();
     }
 }
