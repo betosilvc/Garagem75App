@@ -20,13 +20,18 @@ namespace Garagem76.Client.Services
         {
             var token = await _js.InvokeAsync<string>("localStorage.getItem", "token");
 
-            // 🔥 LIMPA antes (evita duplicação)
             _http.DefaultRequestHeaders.Authorization = null;
 
             if (!string.IsNullOrEmpty(token))
             {
+                // Limpa espaços e aspas que podem vir do LocalStorage
+                var tokenLimpo = token.Trim().Replace("\"", "");
+
                 _http.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
+                    new AuthenticationHeaderValue("Bearer", tokenLimpo);
+
+                // Debug para você ver no console do navegador (F12)
+                Console.WriteLine($"Header enviado: Bearer {tokenLimpo.Substring(0, 10)}...");
             }
         }
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using OpenApi = Microsoft.OpenApi; // Criamos um "apelido" para o Swaggerusing System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,40 @@ builder.Services.AddControllers();
 
 // 🔥 SWAGGER (ESSENCIAL PRA TESTAR)
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configuração do Swagger para suportar JWT
+builder.Services.AddSwaggerGen(c =>
+{
+    // Usando o nome completo para Info
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Garagem 75 API", Version = "v1" });
+
+    // Definindo a segurança sem usar o namespace .Models no meio
+    var securityScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "JWT Authorization header. Digite 'Bearer' [espaço] e o token."
+    };
+
+    c.AddSecurityDefinition("Bearer", securityScheme);
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 //  Cors
 builder.Services.AddCors(options =>
@@ -30,7 +64,18 @@ builder.Services.AddCors(options =>
         });
 });
 
-var key = "GARAGEM75_CHAVE_ULTRA_SECRETA_COM_64_CARACTERES_1234567890"; // depois colocamos no appsettings
+// --- INÍCIO DO TRECHO DE AUTENTICAÇÃO ---
+
+// 1. Busca a chave do appsettings.json
+var chaveJwt = builder.Configuration["Jwt:ChaveSecreta"];
+
+// 2. Verifica se a chave foi encontrada para não dar erro de nulo
+if (string.IsNullOrEmpty(chaveJwt))
+{
+    throw new Exception("Chave JWT não encontrada no appsettings.json!");
+}
+
+var keyBytes = Encoding.UTF8.GetBytes(chaveJwt);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -45,9 +90,27 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false,
         ValidateIssuerSigningKey = true,
         ValidateLifetime = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+        ClockSkew = TimeSpan.Zero // Garante que o token expire na hora exata
+    };
+
+    // Eventos para ajudar você a debugar no terminal da API
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine("ERRO JWT: " + context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("TOKEN VALIDADO COM SUCESSO!");
+            return Task.CompletedTask;
+        }
     };
 });
+
+// --- FIM DO TRECHO DE AUTENTICAÇÃO ---
 
 builder.Services.AddAuthorization();
 
@@ -66,14 +129,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// 🔥 PIPELINE
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseCors("liberado");
-    
-app.UseAuthentication();
-app.UseAuthorization();
+// 🔥 A ORDEM EXATA É ESSA:
+app.UseRouting(); // 1. Roteamento
+
+app.UseCors("liberado"); // 2. Cors (Sempre antes da Auth)
+
+app.UseAuthentication(); // 3. Autenticação (Quem é você?)
+app.UseAuthorization();  // 4. Autorização (O que você pode fazer?)
 
 app.MapControllers();
 

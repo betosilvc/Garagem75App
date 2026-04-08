@@ -1,6 +1,8 @@
-﻿public class LoginResponseDto
+﻿using Garagem75.Shared.Dtos;
+
+public class LoginResponseDto
 {
-    public string Token { get; set; }
-    public string Nome { get; set; }
-    public string Tipo { get; set; }
+    public bool Sucesso { get; set; }
+    public string Token { get; set; } // Se você usar JWT
+    public UsuarioDto Usuario { get; set; } // Os dados do usuário logado
 }

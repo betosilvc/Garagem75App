@@ -18,11 +18,13 @@ namespace Garagem75.Api.Controllers
     {
         private readonly Garagem75DBContext _context;
         private readonly IMapper _mapper;
+        private readonly IConfiguration _configuration;
 
-        public UsuarioController(Garagem75DBContext context, IMapper mapper)
+        public UsuarioController(Garagem75DBContext context, IMapper mapper, IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
+            _configuration = configuration;
         }
 
         [Authorize(Roles = "Administrador")]
@@ -30,9 +32,10 @@ namespace Garagem75.Api.Controllers
         public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll()
         {
             var lista = await _context.Usuarios
-                .Include(u => u.TipoUsuario)
-                .Where(u => u.Ativo) // 🔥 IMPORTANTE
+                //.Include(u => u.TipoUsuario)
+                //.Where(u => u.Ativo) // 🔥 IMPORTANTE
                 .ToListAsync();
+            Console.WriteLine($"TOTAL DE USUARIOS NO BANCO: {lista.Count}");
 
             return Ok(_mapper.Map<List<UsuarioDto>>(lista));
         }
@@ -134,7 +137,8 @@ namespace Garagem75.Api.Controllers
             if (user == null)
                 return Unauthorized("Usuário ou senha inválidos");
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("GARAGEM75_CHAVE_ULTRA_SECRETA_COM_64_CARACTERES_1234567890"));
+            var chaveJwt = _configuration["Jwt:ChaveSecreta"];
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(chaveJwt));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
