@@ -1,4 +1,5 @@
 
+
 :root {
     --cor-primaria: #FFD700;
     --cor-secundaria: #040404;
@@ -10,17 +11,17 @@
 
 
 
-
-
-
 body {
     margin: 0;
     font-family: 'Segoe UI', Roboto, sans-serif;
     background-color: var(--cor-secundaria);
     color: var(--cor-texto);
 }
+
 /* modo escuro automático */
+
 @media (prefers-color-scheme: dark) {
+
     body {
         background: #121212;
         color: #eee;
@@ -30,8 +31,7 @@ body {
     .card-app,
     .card-veiculo,
     .card-detalhe,
-    .os-card
-    {
+    .os-card {
         background: #1e1e1e;
         color: #fff;
         border-color: #333;
@@ -62,12 +62,16 @@ a, .btn-link {
     .btn-primary:hover {
         background: #e6c200;
     }
+
 .form-grid {
     display: grid;
     grid-template-columns: 1fr; /* mobile */
+
     gap: 12px;
 }
+
 @media (min-width: 600px) {
+
     .form-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -94,7 +98,9 @@ a, .btn-link {
     animation: fadeIn 0.2s ease-in;
     padding-top: 1.1rem;
 }
+
 @keyframes fadeIn {
+
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -199,8 +205,8 @@ code {
 }
 
 
-
 /* Container geral */
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -208,6 +214,7 @@ code {
 }
 
 /* Conteúdo */
+
 .content {
     flex: 1;
     padding: 16px;
@@ -215,6 +222,7 @@ code {
 }
 
 /* HEADER */
+
 .header {
     position: sticky;
     top: 0;
@@ -247,11 +255,13 @@ code {
 }
 
 /* SECTION */
+
 .section {
     padding: 15px;
 }
 
 /* CARD APP */
+
 .card-app {
     display: flex;
     justify-content: space-between;
@@ -319,6 +329,7 @@ code {
 }
 
 /* FAB */
+
 .fab {
     position: fixed;
     bottom: 80px;
@@ -344,6 +355,7 @@ code {
 }
 
 /* parte do veículo */
+
 .veiculo-info {
     cursor: pointer;
 }
@@ -359,6 +371,7 @@ code {
     }
 
 /* cliente */
+
 .cliente-info {
     background: #f1f1f1;
     padding: 6px 10px;
@@ -368,6 +381,7 @@ code {
 }
 
 /* hover */
+
 .card-veiculo:hover {
     transform: scale(1.01);
     transition: 0.2s;
@@ -408,7 +422,7 @@ code {
 }
 
 .preview-img {
-    width: 100%;
+    width: 20%;
     margin-top: 10px;
     border-radius: 12px;
 }
@@ -441,7 +455,6 @@ code {
 }
 
 
-
 .img-full {
     width: 30%;
     border-radius: 12px;
@@ -449,12 +462,19 @@ code {
 }
 
 .img-preview {
-    width: 100%;
-    border-radius: 12px;
+    max-width: 300px; /* Ou a largura que preferir */
+
+    max-height: 300px;
+    width: auto;
+    height: auto;
+    display: block;
     margin-top: 10px;
+    border-radius: 8px;
+    object-fit: cover; /* Garante que a imagem não fique esticada */
 }
 
 /* GRID */
+
 .grid-app {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
@@ -463,7 +483,9 @@ code {
 }
 
 /* CARD */
+
 @media (prefers-color-scheme: light) {
+
     .card-app {
         background: #ffffff;
         color: #000000;
@@ -471,11 +493,17 @@ code {
 }
 
 /*@media (prefers-color-scheme: dark) {
+
     .os-card {
+
         background: #1e1e1e;
+
         color: #fff;
+
         border-color: #333;
+
     }
+
 }*/
 
 .os-card {
@@ -488,19 +516,23 @@ code {
 }
 
 /*.os-card:hover {
+
     transform: scale(1.02);
+
 }*/
 
-    /* ✨ ANIMAÇÃO */
-    .card-app:active {
-        transform: scale(0.97);
-    }
+/* ✨ ANIMAÇÃO */
 
-    .card-app:hover {
-        transform: scale(1.02);
-    }
+.card-app:active {
+    transform: scale(0.97);
+}
+
+.card-app:hover {
+    transform: scale(1.02);
+}
 
 /* IMAGEM */
+
 .img-thumb {
     width: 100%;
     height: 120px;
@@ -509,6 +541,7 @@ code {
 }
 
 /* TEXTO */
+
 .card-body {
     margin-top: 8px;
 }
@@ -520,8 +553,8 @@ code {
 }
 
 
-
 /* ESTOQUE */
+
 .estoque-ok {
     background: #2e7d32;
 }
@@ -542,11 +575,13 @@ code {
 }
 
 /* IMAGEM */
+
 .img-container {
     position: relative;
 }
 
 /* BADGE URGENTE */
+
 .badge-urgente {
     position: absolute;
     bottom: 6px;
@@ -559,6 +594,7 @@ code {
 }
 
 /* PREÇO */
+
 .preco {
     font-weight: bold;
     color: #2e7d32;
@@ -570,7 +606,6 @@ code {
     gap: 12px;
     margin-top: 10px;
 }
-
 
 
 .os-header {
@@ -592,6 +627,7 @@ code {
 }
 
 /* STATUS CORES */
+
 .status {
     padding: 4px 8px;
     border-radius: 8px;
@@ -613,7 +649,9 @@ code {
 
 
 /* modo escuro automático */
+
 @media (prefers-color-scheme: dark) {
+
     body {
         background: #121212;
         color: #eee;
@@ -658,6 +696,7 @@ a, .btn-link {
 }
 
 @keyframes fadeIn {
+
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -760,8 +799,8 @@ code {
 }
 
 
-
 /* Container geral */
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -769,6 +808,7 @@ code {
 }
 
 /* Conteúdo */
+
 .content {
     flex: 1;
     padding: 16px;
@@ -776,6 +816,7 @@ code {
 }
 
 /* HEADER */
+
 .header {
     display: flex;
     align-items: center;
@@ -804,11 +845,13 @@ code {
 }
 
 /* SECTION */
+
 .section {
     padding: 15px;
 }
 
 /* CARD APP */
+
 .card-app {
     display: flex;
     justify-content: space-between;
@@ -853,6 +896,7 @@ code {
     }
 
     /* ativo */
+
     .nav-item.active {
         color: #4CAF50;
     }
@@ -862,12 +906,12 @@ code {
         }
 
     /* clique */
+
     .nav-item:active {
         transform: scale(0.9);
     }
 
 .card {
-   
     border-radius: 16px;
     padding: 14px;
     margin-bottom: 10px;
@@ -884,7 +928,6 @@ code {
 }
 
 
-
 .card-veiculo {
     border-radius: 16px;
     padding: 14px;
@@ -896,6 +939,7 @@ code {
 }
 
 /* parte do veículo */
+
 .veiculo-info {
     cursor: pointer;
 }
@@ -911,6 +955,7 @@ code {
     }
 
 /* cliente */
+
 .cliente-info {
     background: #777;
     padding: 6px 10px;
@@ -920,6 +965,7 @@ code {
 }
 
 /* hover */
+
 .card-veiculo:hover {
     transform: scale(1.01);
     transition: 0.2s;
@@ -993,7 +1039,6 @@ code {
 }
 
 
-
 .img-full {
     width: 30%;
     border-radius: 12px;
@@ -1007,6 +1052,7 @@ code {
 }
 
 /* GRID */
+
 .grid-pecas {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -1014,7 +1060,9 @@ code {
 }
 
 /* CARD */
+
 @media (prefers-color-scheme: light) {
+
     .card-app {
         background: #ffffff;
         color: #000000;
@@ -1022,14 +1070,21 @@ code {
 }
 
 /*@media (prefers-color-scheme: dark) {
+
     .os-card {
+
         background: #1e1e1e;
+
         color: #fff;
+
         border-color: #333;
+
     }
+
 }*/
 
 /* ✨ ANIMAÇÃO */
+
 .card-app:active {
     transform: scale(0.97);
 }
@@ -1039,6 +1094,7 @@ code {
 }
 
 /* IMAGEM */
+
 .img-thumb {
     width: 100%;
     height: 120px;
@@ -1047,6 +1103,7 @@ code {
 }
 
 /* TEXTO */
+
 .card-body {
     margin-top: 8px;
 }
@@ -1058,8 +1115,8 @@ code {
 }
 
 
-
 /* ESTOQUE */
+
 .estoque-ok {
     background: #2e7d32;
 }
@@ -1080,11 +1137,13 @@ code {
 }
 
 /* IMAGEM */
+
 .img-container {
     position: relative;
 }
 
 /* BADGE URGENTE */
+
 .badge-urgente {
     position: absolute;
     bottom: 6px;
@@ -1097,6 +1156,7 @@ code {
 }
 
 /* PREÇO */
+
 .preco {
     font-weight: bold;
     color: #2e7d32;
@@ -1128,6 +1188,7 @@ code {
 }
 
 /* STATUS CORES */
+
 .status {
     padding: 4px 8px;
     border-radius: 8px;
@@ -1170,6 +1231,7 @@ button {
 }
 
 @keyframes fadeIn {
+
     from {
         opacity: 0;
         transform: scale(0.8);
@@ -1201,6 +1263,7 @@ button {
 }
 
 @keyframes slideFade {
+
     from {
         opacity: 0;
         transform: translateX(10px);
@@ -1228,6 +1291,7 @@ button:active,
 }
 
 @keyframes loading {
+
     0% {
         background-position: 200% 0;
     }
@@ -1260,6 +1324,7 @@ button:hover {
 }
 
 @media (min-width: 700px) {
+
     .dashboard-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -1315,6 +1380,7 @@ button:hover {
 
 
 /* CARD PADRÃO (IGUAL PEÇAS) */
+
 .card-app {
     background: #1e1e1e;
     color: #c8c473;
@@ -1330,6 +1396,7 @@ button:hover {
     }
 
 /* HEADER */
+
 .card-header {
     display: flex;
     align-items: center;
@@ -1337,6 +1404,7 @@ button:hover {
 }
 
 /* AVATAR */
+
 .avatar {
     width: 45px;
     height: 45px;
@@ -1351,6 +1419,7 @@ button:hover {
 }
 
 /* TITLE */
+
 .title {
     display: flex;
     flex-direction: column;
@@ -1367,6 +1436,7 @@ button:hover {
     }
 
 /* STATUS */
+
 .status {
     font-size: 11px;
     padding: 4px 8px;
@@ -1382,6 +1452,7 @@ button:hover {
     }
 
 /* BODY */
+
 .card-body {
     margin-top: 10px;
 }
@@ -1395,6 +1466,7 @@ button:hover {
 }
 
 /* ACTIONS */
+
 .card-actions {
     margin-top: 12px;
     display: flex;
@@ -1411,6 +1483,7 @@ button:hover {
     }
 
 /* BOTÕES */
+
 .btn-edit {
     background: #2196f3;
     color: white;
@@ -1444,6 +1517,7 @@ button:hover {
 }
 
 /* HEADER */
+
 .detalhe-header {
     display: flex;
     align-items: center;
@@ -1465,6 +1539,7 @@ button:hover {
 }
 
 /* BADGE */
+
 .badge {
     padding: 4px 10px;
     border-radius: 20px;
@@ -1482,6 +1557,7 @@ button:hover {
     }
 
 /* CARD */
+
 .detalhe-card {
     background: #1e1e1e;
     padding: 16px;
@@ -1490,6 +1566,7 @@ button:hover {
 }
 
 /* AÇÕES */
+
 .acoes {
     display: flex;
     gap: 10px;

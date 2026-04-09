@@ -1,5 +1,5 @@
 ﻿@page "/usuarios/novo"
-@* @page "/usuarios/{id:int}" *@
+@page "/usuarios/editar/{id:int}"
 @attribute [Authorize(Roles = "Administrador")]
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
@@ -54,18 +54,57 @@
     List<TipoUsuarioDto> tipos = new();
 
     protected override async Task OnInitializedAsync()
-    {
-        tipos = await TipoApi.GetAll();
-    }
 
-    async Task Salvar()
     {
-        if (usuario.TipoUsuarioId == 0)
+
+        tipos = await TipoApi.GetAll();
+ 
+        // Se houver um ID, significa que é EDIÇÃO
+
+        if (id.HasValue)
+
         {
-            Console.WriteLine("Tipo de usuário não selecionado");
-            return;
+
+            // Aqui você deve chamar o método GetById da sua API
+
+            var resultado = await Api.GetById(id.Value);
+
+            if (resultado != null)
+
+            {
+
+                usuario = resultado;
+
+            }
+
         }
-        await Api.Create(usuario);
-        Nav.NavigateTo("/login");
+
     }
+ 
+    async Task Salvar()
+
+    {
+
+        if (usuario.TipoUsuarioId == 0) return;
+ 
+        if (id.HasValue)
+
+        {
+
+            await Api.Update(id.Value, usuario); // Lógica de atualização
+
+        }
+
+        else
+
+        {
+
+            await Api.Create(usuario); // Lógica de criação
+
+        }
+ 
+        Nav.NavigateTo("/usuarios"); // Talvez voltar para a lista em vez do login?
+
+    }
+ 
 }

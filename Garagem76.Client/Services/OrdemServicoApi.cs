@@ -22,10 +22,9 @@ public class OrdemServicoApi
     public async Task Finalizar(int id)
         => await _http.PutAsync($"api/ordemservico/{id}/finalizar", null);
 
-    public async Task AddPeca(int osId, int pecaId, int quantidade)
+    public async Task AddPeca(int ordemId, int pecaId, int qtd)
     {
-        await _http.PostAsJsonAsync($"api/ordemservico/{osId}/add-peca",
-            new { pecaId, quantidade });
+        await _http.PostAsync($"api/OrdemServicoPeca?ordemId={ordemId}&pecaId={pecaId}&quantidade={qtd}", null);
     }
 
     public async Task RemovePeca(int osId, int pecaId)

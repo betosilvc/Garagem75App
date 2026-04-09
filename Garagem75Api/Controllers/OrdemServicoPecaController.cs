@@ -30,7 +30,7 @@ namespace Garagem75.Api.Controllers
 
         // ➕ ADICIONAR PEÇA
         [HttpPost]
-        public async Task<IActionResult> AddPeca(int ordemId, int pecaId, int quantidade)
+        public async Task<IActionResult> AddPeca([FromQuery] int ordemId, [FromQuery] int pecaId, [FromQuery] int quantidade)
         {
             var os = await _context.OrdemServicos
                 .Include(o => o.PecasAssociadas)
@@ -95,7 +95,7 @@ namespace Garagem75.Api.Controllers
 
         // ❌ REMOVER PEÇA
         [HttpDelete]
-        public async Task<IActionResult> RemovePeca(int ordemId, int pecaId)
+        public async Task<IActionResult> RemovePeca([FromQuery] int ordemId, [FromQuery] int pecaId)
         {
             var item = await _context.OrdemServicoPecas
                 .FirstOrDefaultAsync(x =>

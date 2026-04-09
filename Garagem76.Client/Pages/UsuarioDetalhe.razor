@@ -89,7 +89,7 @@ else
 
         void Editar()
         {
-            Nav.NavigateTo($"/usuarios/{id}");
+            Nav.NavigateTo($"/usuarios/editar/{id}");    
         }
 
         async Task Desativar()
@@ -107,4 +107,3 @@ else
             Nav.NavigateTo("/usuarios");
         }
     }
-}

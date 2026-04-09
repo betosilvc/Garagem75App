@@ -112,28 +112,48 @@ namespace Garagem75.Api.Controllers
             return Ok();
         }
 
-        // PUT
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, OrdemServicoDto dto)
         {
-            if (id != dto.IdOrdemServico)
-                return BadRequest();
+            if (id != dto.IdOrdemServico) return BadRequest();
 
-            var entity = await _context.OrdemServicos.FindAsync(id);
+            var entity = await _context.OrdemServicos
+                .Include(x => x.PecasAssociadas)
+                .FirstOrDefaultAsync(x => x.IdOrdemServico == id);
 
-            if (entity == null)
-                return NotFound();
+            if (entity == null) return NotFound();
 
+            // Atualiza dados básicos
             _mapper.Map(dto, entity);
 
-            // 🔥 RECALCULA
-            entity.ValorTotal = entity.MaoDeObra - entity.ValorDesconto;
+            // Limpa as peças para reinserir (Padrão para o MVC)
+            if (entity.PecasAssociadas != null)
+            {
+                _context.OrdemServicoPecas.RemoveRange(entity.PecasAssociadas);
+            }
+
+            if (dto.Pecas != null)
+            {
+                foreach (var p in dto.Pecas)
+                {
+                    var pecaOriginal = await _context.Pecas.FindAsync(p.PecaId);
+                    entity.PecasAssociadas.Add(new OrdemServicoPeca
+                    {
+                        OrdemServicoId = id, // 👈 Certifique-se que o nome na Model é este
+                        PecaId = p.PecaId,
+                        Quantidade = p.Quantidade,
+                        PrecoUnitario = pecaOriginal?.Preco ?? 0 // 🔥 Busca o preço atual da peça
+                    });
+                }
+            }
+
+            // Recalcula o total antes de salvar
+            var totalPecas = entity.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario);
+            entity.ValorTotal = entity.MaoDeObra + totalPecas - entity.ValorDesconto;
 
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
-
         // FINALIZAR
         [HttpPut("{id}/finalizar")]
         public async Task<IActionResult> Finalizar(int id)

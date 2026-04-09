@@ -85,7 +85,7 @@ else
 
     void Novo() => Nav.NavigateTo("/usuarios/novo");
 
-    void Editar(int id) => Nav.NavigateTo($"/usuarios/{id}");
+    void Editar(int id) => Nav.NavigateTo($"/usuarios/editar/{id}");
 
     async Task Excluir(int id)
     {
