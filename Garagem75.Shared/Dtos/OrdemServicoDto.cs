@@ -19,7 +19,7 @@ namespace Garagem75.Shared.Dtos
         public string? PlacaVeiculo { get; set; }
         public string? VeiculoModelo { get; set; }
 
-        public List<OrdemServicoPecaDto> Pecas { get; set; } = new();
+        public List<OrdemServicoPecaDto> PecasAssociadas { get; set; } = new();
 
         
 

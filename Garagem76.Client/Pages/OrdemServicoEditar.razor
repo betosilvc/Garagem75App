@@ -56,6 +56,14 @@ else
     <button class="btn btn-success mt-3" @onclick="Finalizar">
         Finalizar OS
     </button>
+    @* ADICIONE ESTE BOTÃO AQUI *@
+    <button class="btn btn-primary mt-3" @onclick="SalvarAlteracoes">
+        Salvar Alterações
+    </button>
+    
+    <button class="btn btn-secondary mt-3" @onclick="Voltar">
+        Voltar
+    </button>
 }
 
 @code {
@@ -76,6 +84,7 @@ else
     async Task AddPeca()
     {
         await Api.AddPeca(id, pecaSelecionada, qtd);
+        qtd = 1; // Reseta a quantidade
         model = await Api.GetById(id);
     }
 
@@ -83,6 +92,22 @@ else
     {
         await Api.RemovePeca(id, pecaId);
         model = await Api.GetById(id);
+    }
+    async Task SalvarAlteracoes()
+    {
+        if (model != null)
+        {
+            // Envia o objeto inteiro para o Update da API (aquela lógica que arrumamos)
+            await Api.Update(id, model);
+            
+            // Opcional: Navega de volta para a lista ou exibe um alerta
+            Nav.NavigateTo("/os/");
+        }
+    }
+
+    void Voltar()
+    {
+        Nav.NavigateTo("/os/");
     }
     async Task Finalizar()
     {

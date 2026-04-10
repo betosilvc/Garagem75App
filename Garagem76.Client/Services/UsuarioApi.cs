@@ -96,7 +96,7 @@ namespace Garagem76.Client.Services
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-            return result?.Token;
+            return result?.token;
         }
     }
 }

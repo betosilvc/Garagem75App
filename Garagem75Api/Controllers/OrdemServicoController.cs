@@ -43,21 +43,28 @@ namespace Garagem75.Api.Controllers
             }
         }
 
-        // GET BY ID
         [HttpGet("{id}")]
         public async Task<ActionResult<OrdemServicoDto>> GetById(int id)
         {
             var os = await _context.OrdemServicos
                 .Include(o => o.Veiculo)
-                        .ThenInclude(o => o.Cliente)
-                    .Include(o => o.PecasAssociadas)
-                        .ThenInclude(p => p.Peca)
+                    .ThenInclude(v => v.Cliente)
+                .Include(o => o.PecasAssociadas)
+                    .ThenInclude(p => p.Peca)
                 .FirstOrDefaultAsync(o => o.IdOrdemServico == id);
 
-            if (os == null)
-                return NotFound();
+            if (os == null) return NotFound();
 
-            return Ok(_mapper.Map<OrdemServicoDto>(os));
+            // 🔥 RECALCULO FORÇADO: Garante que o DTO vá com o valor real
+            var totalPecas = os.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario);
+            os.ValorTotal = (os.MaoDeObra + totalPecas) - os.ValorDesconto;
+
+            var dto = _mapper.Map<OrdemServicoDto>(os);
+
+            // Garantia extra: atribui o total calculado ao DTO
+            dto.ValorTotal = os.ValorTotal;
+
+            return Ok(dto);
         }
 
         // POST
@@ -79,7 +86,7 @@ namespace Garagem75.Api.Controllers
             };
 
             // 🔥 ADICIONAR PEÇAS
-            foreach (var item in dto.Pecas)
+            foreach (var item in dto.PecasAssociadas)
             {
                 var peca = await _context.Pecas.FindAsync(item.PecaId);
 
@@ -117,42 +124,52 @@ namespace Garagem75.Api.Controllers
         {
             if (id != dto.IdOrdemServico) return BadRequest();
 
+            // 1. Carrega a OS com as peças atuais
             var entity = await _context.OrdemServicos
                 .Include(x => x.PecasAssociadas)
                 .FirstOrDefaultAsync(x => x.IdOrdemServico == id);
 
             if (entity == null) return NotFound();
 
-            // Atualiza dados básicos
+            // 2. Mapeia os dados básicos (Descricao, MaoDeObra, etc)
             _mapper.Map(dto, entity);
 
-            // Limpa as peças para reinserir (Padrão para o MVC)
-            if (entity.PecasAssociadas != null)
+            // 3. GERENCIAMENTO DE PEÇAS (Para o MVC funcionar)
+            // Se o DTO trouxe uma lista de peças, vamos sincronizar com o banco
+            if (dto.PecasAssociadas != null)
             {
+                // Remove o que não está mais no DTO ou limpa tudo para reinserir
                 _context.OrdemServicoPecas.RemoveRange(entity.PecasAssociadas);
-            }
 
-            if (dto.Pecas != null)
-            {
-                foreach (var p in dto.Pecas)
+                foreach (var p in dto.PecasAssociadas)
                 {
-                    var pecaOriginal = await _context.Pecas.FindAsync(p.PecaId);
+                    // Busca o preço atual da peça para o cálculo ser real
+                    var pecaDb = await _context.Pecas.AsNoTracking().FirstOrDefaultAsync(x => x.IdPeca == p.PecaId);
+
                     entity.PecasAssociadas.Add(new OrdemServicoPeca
                     {
-                        OrdemServicoId = id, // 👈 Certifique-se que o nome na Model é este
+                        OrdemServicoId = id,
                         PecaId = p.PecaId,
                         Quantidade = p.Quantidade,
-                        PrecoUnitario = pecaOriginal?.Preco ?? 0 // 🔥 Busca o preço atual da peça
+                        PrecoUnitario = pecaDb?.Preco ?? 0
                     });
                 }
             }
 
-            // Recalcula o total antes de salvar
-            var totalPecas = entity.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario);
-            entity.ValorTotal = entity.MaoDeObra + totalPecas - entity.ValorDesconto;
+            // 4. RECALCULA O TOTAL GERAL (A ÚNICA FONTE DE VERDADE)
+            decimal totalPecas = entity.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario);
+            entity.ValorTotal = (entity.MaoDeObra + totalPecas) - entity.ValorDesconto;
 
-            await _context.SaveChangesAsync();
-            return NoContent();
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao salvar OS {id}: {ex.Message}");
+                return BadRequest("Erro ao atualizar os dados no banco.");
+            }
         }
         // FINALIZAR
         [HttpPut("{id}/finalizar")]

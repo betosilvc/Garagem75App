@@ -21,10 +21,17 @@ else
 
         <p><strong>Mão de obra:</strong> R$ @model.MaoDeObra</p>
         <p><strong>Desconto:</strong> R$ @model.ValorDesconto</p>
-
+        <hr />
+        <h5>Peças Utilizadas:</h5>
+        <ul>
+            @foreach (var p in model.Pecas)
+            {
+                <li>@p.NomePeca - @p.Quantidade x @p.PrecoUnitario.ToString("C2")</li>
+            }
+        </ul>
         <p>
             <strong>Total:</strong>
-            <span class="preco">R$ @model.ValorTotal</span>
+            <span class="preco">R$ @model.ValorTotal.ToString("C2")</span>
         </p>
 
         <button class="btn btn-primary mt-3"

@@ -19,6 +19,11 @@ public class OrdemServicoApi
     public async Task Create(OrdemServicoDto dto)
         => await _http.PostAsJsonAsync("api/ordemservico", dto);
 
+    public async Task Update(int id, OrdemServicoDto dto)
+    {
+        // Chama o PUT da sua OrdemServicoController
+        await _http.PutAsJsonAsync($"api/OrdemServico/{id}", dto);
+    }
     public async Task Finalizar(int id)
         => await _http.PutAsync($"api/ordemservico/{id}/finalizar", null);
 
@@ -27,8 +32,9 @@ public class OrdemServicoApi
         await _http.PostAsync($"api/OrdemServicoPeca?ordemId={ordemId}&pecaId={pecaId}&quantidade={qtd}", null);
     }
 
-    public async Task RemovePeca(int osId, int pecaId)
+    public async Task RemovePeca(int ordemId, int pecaId)
     {
-        await _http.DeleteAsync($"api/ordemservico/{osId}/remove-peca/{pecaId}");
+        // Enviamos os parâmetros via QueryString (?ordemId=X&pecaId=Y)
+        await _http.DeleteAsync($"api/OrdemServicoPeca?ordemId={ordemId}&pecaId={pecaId}");
     }
 }
