@@ -9,47 +9,241 @@
 @inject AuthenticationStateProvider AuthProvider
 @attribute [AllowAnonymous]
 
-<h3>Login</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<div class="login-container">
-
-    <InputText class="input" placeholder="Email"
-               @bind-Value="email" />
-
-    <InputText class="input" type="password"
-               placeholder="Senha"
-               @bind-Value="senha" />
-
-    <button type="button" class="btn btn-primary" @onclick="FazerLogin">
-        Entrar
-    </button>
-    <p class="muted">Não tem conta?</p>
-
-    @* <button class="btn btn-outline-primary" @onclick="IrParaCadastro">
-        Criar conta
-    </button> *@
-
-    @if (!string.IsNullOrEmpty(erro))
-    {
-        <p class="text-danger">@erro</p>
+    html, body {
+        background: #0f0f11;
+        margin: 0; padding: 0;
+        height: 100%;
     }
 
+    .lg-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --border-focus: rgba(232,255,71,0.4);
+        --accent: #ffd700;
+        --text: #f0f0f0;
+        --muted: #666;
+        --danger: #f87171;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .lg-card {
+        width: 100%;
+        max-width: 380px;
+    }
+
+    /* LOGO */
+    .lg-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 36px;
+    }
+    .lg-logo-icon {
+        width: 36px; height: 36px;
+        background: var(--accent);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+    }
+    .lg-logo-text {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.4px;
+    }
+    .lg-logo-text span { color: var(--accent); }
+
+    /* HEADING */
+    .lg-heading {
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        margin-bottom: 6px;
+    }
+    .lg-sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 32px;
+    }
+
+    /* FIELDS */
+    .lg-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+    }
+    .lg-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+    .lg-input {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+    }
+    .lg-input::placeholder { color: var(--muted); }
+    .lg-input:focus { border-color: var(--border-focus); }
+
+    /* ERRO */
+    .lg-erro {
+        background: rgba(248,113,113,0.1);
+        border: 1px solid rgba(248,113,113,0.25);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--danger);
+        margin-bottom: 16px;
+    }
+
+    /* BOTÃO */
+    .lg-btn {
+        width: 100%;
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 13px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .lg-btn:hover:not(:disabled) { opacity: 0.88; }
+    .lg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* SPINNER */
+    .lg-spinner {
+        width: 16px; height: 16px;
+        border: 2px solid rgba(0,0,0,0.2);
+        border-top-color: #0f0f11;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* RODAPÉ */
+    .lg-footer {
+        text-align: center;
+        margin-top: 28px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* DIVISOR */
+    .lg-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 28px 0;
+    }
+</style>
+
+<div class="lg-shell">
+    <div class="lg-card">
+
+        <div class="lg-logo">
+            <div class="lg-logo-icon">🔧</div>
+            <div class="lg-logo-text">Garagem <span>75</span></div>
+        </div>
+
+        <div class="lg-heading">Bem-vindo de volta</div>
+        <div class="lg-sub">Faça login para continuar</div>
+
+        @if (!string.IsNullOrEmpty(erro))
+        {
+            <div class="lg-erro">⚠ @erro</div>
+        }
+
+        <div class="lg-field">
+            <label class="lg-label">Email</label>
+            <InputText class="lg-input"
+                       placeholder="seu@email.com"
+                       @bind-Value="email"
+                       @onkeydown="TeclaPressionada" />
+        </div>
+
+        <div class="lg-field">
+            <label class="lg-label">Senha</label>
+            <InputText class="lg-input"
+                       type="password"
+                       placeholder="••••••••"
+                       @bind-Value="senha"
+                       @onkeydown="TeclaPressionada" />
+        </div>
+
+        <button class="lg-btn" @onclick="FazerLogin" disabled="@carregando">
+            @if (carregando)
+            {
+                <div class="lg-spinner"></div>
+                <span>Entrando...</span>
+            }
+            else
+            {
+                <span>Entrar</span>
+            }
+        </button>
+
+        <hr class="lg-divider" />
+
+        <div class="lg-footer">
+            Acesso restrito a membros da equipe.
+        </div>
+
+    </div>
 </div>
 
 @code {
     string email = "";
     string senha = "";
     string? erro;
+    bool carregando = false;
+
+    async Task TeclaPressionada(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await FazerLogin();
+    }
 
     async Task FazerLogin()
     {
+        if (carregando) return;
+
         erro = null;
+        carregando = true;
 
         var token = await Api.Login(email.Trim(), senha.Trim());
 
         if (string.IsNullOrEmpty(token))
         {
-            erro = "Login inválido";
+            erro = "Email ou senha inválidos. Tente novamente.";
+            carregando = false;
             return;
         }
 
@@ -58,13 +252,12 @@
         var auth = (AuthStateProvider)AuthProvider;
         await auth.NotifyUserAuthentication(token);
 
-        // 🔥 TESTE AQUI
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
         Console.WriteLine("Autenticado: " + user.Identity?.IsAuthenticated);
 
-        Nav.NavigateTo("/dashboard", true); // 🔥 ESSENCIAL
+        Nav.NavigateTo("/dashboard", true);
     }
 
     void IrParaCadastro()

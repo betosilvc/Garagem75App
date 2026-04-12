@@ -8,59 +8,190 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3 class="title">Usuários</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-@if (loading)
-{
-    <div class="loading">Carregando usuários...</div>
-}
-else if (!usuarios.Any())
-{
-    <div class="empty">
-        <p>Nenhum usuário encontrado</p>
-        <button class="btn-primary" @onclick="Novo">Criar primeiro usuário</button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
+
+    /* TOPBAR */
+    .cli-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+    .cli-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .cli-title span { color: var(--accent); }
+    
+    .cli-btn-novo {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+
+    /* GRID */
+    .cli-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+    }
+
+    .cli-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        transition: transform 0.2s, border-color 0.2s;
+        position: relative;
+    }
+    .cli-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+
+    /* USER HEADER */
+    .u-header { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+    
+    .u-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Space Mono', monospace;
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 18px;
+    }
+
+    .u-info { flex: 1; min-width: 0; }
+    .u-nome { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .u-email { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+
+    /* STATUS & TAGS */
+    .u-meta { display: flex; align-items: center; gap: 8px; }
+    
+    .tag-role {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.05);
+        color: var(--text);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .status-ativo { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-inativo { background: var(--danger); }
+
+    /* ACTIONS */
+    .u-actions {
+        display: flex;
+        gap: 8px;
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+        justify-content: flex-end;
+    }
+
+    .icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.08); }
+    .icon-btn.danger:hover { color: var(--danger); border-color: rgba(248,113,113,0.3); }
+
+    .loading-box { text-align: center; color: var(--muted); padding: 60px 0; }
+
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">Gerenciar Equipe<span>.</span></div>
+        <button class="cli-btn-novo" @onclick="Novo">+ Novo Usuário</button>
     </div>
-}
-else
-{
-    <div class="grid-app">
-        @foreach (var u in usuarios)
-        {
-            <div class="card-app user-card" @onclick="() => IrDetalhe(u.IdUsuario)">
-                
 
-                <!-- HEADER -->
-                <div class="card-header">
-                    <div class="avatar">@u.Nome.Substring(0, 1).ToUpper()</div>
-
-                    <div class="title">
-                        <strong>@u.Nome</strong>
-                        <span class="email">@u.Email</span>
+    @if (loading)
+    {
+        <div class="loading-box">Carregando usuários...</div>
+    }
+    else if (!usuarios.Any())
+    {
+        <div class="loading-box">
+            <p>Nenhum colaborador cadastrado.</p>
+            <button class="cli-btn-novo" style="margin-top: 15px" @onclick="Novo">Criar Primeiro</button>
+        </div>
+    }
+    else
+    {
+        <div class="cli-grid">
+            @foreach (var u in usuarios)
+            {
+                <div class="cli-card">
+                    @* Identificação *@
+                    <div class="u-header" @onclick="() => IrDetalhe(u.IdUsuario)">
+                        <div class="u-avatar">@u.Nome[..1].ToUpper()</div>
+                        <div class="u-info">
+                            <div class="u-nome">@u.Nome</div>
+                            <div class="u-email">@u.Email</div>
+                        </div>
+                        <div class="status-dot @(u.Ativo ? "status-ativo" : "status-inativo")" 
+                             title="@(u.Ativo ? "Usuário Ativo" : "Usuário Inativo")"></div>
                     </div>
 
-                    <span class="status @(u.Ativo ? "ativo" : "inativo")">
-                        @(u.Ativo ? "Ativo" : "Inativo")
-                    </span>
+                    @* Cargo / Role *@
+                    <div class="u-meta">
+                        <span class="tag-role">@u.TipoUsuario?.DescricaoTipoUsuario</span>
+                    </div>
+
+                    @* Ações Rápidas *@
+                    <div class="u-actions">
+                        <button class="icon-btn" @onclick="() => Editar(u.IdUsuario)" @onclick:stopPropagation="true">✏️</button>
+                        <button class="icon-btn danger" @onclick="() => Excluir(u.IdUsuario)" @onclick:stopPropagation="true">🗑️</button>
+                    </div>
                 </div>
-
-                <!-- BODY -->
-                <div class="card-body">
-                    <span class="tag">@u.TipoUsuario?.DescricaoTipoUsuario</span>
-                </div>
-
-                <!-- ACTIONS -->
-                <div class="card-actions">
-                    <button class="btn-edit" @onclick="() => Editar(u.IdUsuario)">✏️</button>
-                    <button class="btn-delete" @onclick="() => Excluir(u.IdUsuario)">🗑️</button>
-                </div>
-
-            </div>
-        }
-    </div>
-}
-
-<!-- FAB botão flutuante -->
-<button class="fab" @onclick="Novo">＋</button>
+            }
+        </div>
+    }
+</div>
 
 @code {
     private List<UsuarioDto> usuarios = new();
@@ -72,41 +203,23 @@ else
     private async Task Carregar()
     {
         loading = true;
-
-        try
-        {
+        try {
             usuarios = (await Api.GetAll()) ?? new();
-        }
-        finally
-        {
+        } finally {
             loading = false;
         }
     }
 
     void Novo() => Nav.NavigateTo("/usuarios/novo");
-
     void Editar(int id) => Nav.NavigateTo($"/usuarios/editar/{id}");
+    void IrDetalhe(int id) => Nav.NavigateTo($"/usuarios/{id}");
 
     async Task Excluir(int id)
     {
         var confirmar = await JS.InvokeAsync<bool>("confirm", "Deseja realmente excluir este usuário?");
-
-        if (!confirmar)
-            return;
+        if (!confirmar) return;
 
         await Api.Delete(id);
-
         await Carregar();
-    }
-
-    async Task ToggleAtivo(UsuarioDto u)
-    {
-        u.Ativo = !u.Ativo;
-        await Api.Update(u.IdUsuario, u);
-    }
-
-    void IrDetalhe(int id)
-    {
-        Nav.NavigateTo($"/usuarios/{id}");
     }
 }

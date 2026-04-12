@@ -7,57 +7,284 @@
 @inject ClienteApi Api
 @inject NavigationManager Nav
 
-<h3>Clientes</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<button class="fab" @onclick="Novo">+</button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-@if (loading)
-{
-    <p>Carregando...</p>
-}
-else if (clientes?.Count == 0)
-{
-    <p>Nenhum cliente cadastrado</p>
-}
-else
-{
-    <div class="grid-app">
-    @foreach (var c in clientes)
+    /* TOPBAR */
+    .cli-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+    .cli-title {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+    }
+    .cli-title span { color: var(--accent); }
+    .cli-btn-novo {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .cli-btn-novo:hover { opacity: 0.88; }
+
+    /* BUSCA */
+    .cli-search-wrap {
+        margin-bottom: 20px;
+    }
+    .cli-search {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    .cli-search::placeholder { color: var(--muted); }
+    .cli-search:focus { border-color: rgba(255,255,255,0.2); }
+
+    /* GRID */
+    .cli-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+
+    .cli-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        transition: border-color 0.2s, transform 0.15s;
+    }
+    .cli-card:hover {
+        border-color: rgba(255,255,255,0.16);
+        transform: translateY(-1px);
+    }
+
+    .cli-card-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--accent);
+        flex-shrink: 0;
+        font-family: 'Space Mono', monospace;
+    }
+
+    .cli-card-info { flex: 1; min-width: 0; }
+    .cli-card-nome {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+    }
+    .cli-card-tel {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .cli-card-acoes {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+    .cli-icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    .cli-icon-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+    .cli-icon-btn.danger:hover { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); }
+
+    /* EMPTY / LOADING */
+    .cli-empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 60px 0;
+        font-size: 14px;
+    }
+
+    /* MODAL */
+    .cli-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .cli-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .cli-modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    .cli-modal-body {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 24px;
+        line-height: 1.6;
+    }
+    .cli-modal-footer {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    .cli-btn-cancel {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .cli-btn-cancel:hover { background: rgba(255,255,255,0.08); }
+    .cli-btn-danger {
+        background: rgba(248,113,113,0.15);
+        border: 1px solid rgba(248,113,113,0.3);
+        color: var(--danger);
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .cli-btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+    @@media (max-width: 480px) {
+        .cli-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="cli-shell">
+
+    <div class="cli-topbar">
+        <div class="cli-title">Clientes<span>.</span></div>
+        <button class="cli-btn-novo" @onclick="Novo">+ Novo cliente</button>
+    </div>
+
+    <div class="cli-search-wrap">
+        <input class="cli-search"
+               type="text"
+               placeholder="Buscar por nome ou telefone..."
+               @bind="busca"
+               @bind:event="oninput" />
+    </div>
+
+    @if (loading)
     {
-        <div class="card card-click" @onclick="() => VerDetalhe(c.Id)">
-            <div>
-                <strong>@c.Nome</strong>
-                <p>@c.Telefone</p>
-            </div>
-
-            <div class="acoes">
-                <button @onclick:stopPropagation="true" @onclick="() => Editar(c.Id)">✏️</button>
-                <button @onclick:stopPropagation="true" @onclick="() => AbrirModal(c.Id)">🗑️</button>
-            </div>
+        <div class="cli-empty">Carregando...</div>
+    }
+    else if (!ClientesFiltrados.Any())
+    {
+        <div class="cli-empty">Nenhum cliente encontrado.</div>
+    }
+    else
+    {
+        <div class="cli-grid">
+            @foreach (var c in ClientesFiltrados)
+            {
+                <div class="cli-card" @onclick="() => VerDetalhe(c.Id)">
+                    <div class="cli-card-avatar">@Iniciais(c.Nome)</div>
+                    <div class="cli-card-info">
+                        <div class="cli-card-nome">@c.Nome</div>
+                        <div class="cli-card-tel">@c.Telefone</div>
+                    </div>
+                    <div class="cli-card-acoes">
+                        <div class="cli-icon-btn"
+                             @onclick:stopPropagation="true"
+                             @onclick="() => Editar(c.Id)"
+                             title="Editar">✏️</div>
+                        <div class="cli-icon-btn danger"
+                             @onclick:stopPropagation="true"
+                             @onclick="() => AbrirModal(c.Id)"
+                             title="Excluir">🗑️</div>
+                    </div>
+                </div>
+            }
         </div>
     }
-    </div>
-}
+
+</div>
 
 @if (mostrarModal)
 {
-    <div class="modal fade show" style="display:block; background:rgba(0,0,0,0.5)">
-        <div class="modal-dialog">
-            <div class="modal-content">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirmar exclusão</h5>
-                </div>
-
-                <div class="modal-body">
-                    Deseja excluir este cliente?
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="FecharModal">Cancelar</button>
-                    <button class="btn btn-danger" @onclick="ExcluirConfirmado">Excluir</button>
-                </div>
-
+    <div class="cli-modal-overlay">
+        <div class="cli-modal">
+            <div class="cli-modal-title">Excluir cliente</div>
+            <div class="cli-modal-body">
+                Esta ação não pode ser desfeita.<br />Tem certeza que deseja excluir este cliente?
+            </div>
+            <div class="cli-modal-footer">
+                <button class="cli-btn-cancel" @onclick="FecharModal">Cancelar</button>
+                <button class="cli-btn-danger" @onclick="ExcluirConfirmado">Excluir</button>
             </div>
         </div>
     </div>
@@ -66,6 +293,15 @@ else
 @code {
     List<ClienteDto>? clientes;
     bool loading = true;
+    string busca = "";
+
+    IEnumerable<ClienteDto> ClientesFiltrados =>
+        string.IsNullOrWhiteSpace(busca)
+            ? clientes ?? Enumerable.Empty<ClienteDto>()
+            : (clientes ?? Enumerable.Empty<ClienteDto>())
+                .Where(c =>
+                    (c.Nome?.Contains(busca, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (c.Telefone?.Contains(busca) ?? false));
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,46 +309,29 @@ else
         loading = false;
     }
 
-    void Novo() => Nav.NavigateTo("/clientes/novo");
-    void Editar(int id) => Nav.NavigateTo($"/clientes/{id}");
-    async Task Excluir(int id)
+    string Iniciais(string? nome)
     {
-        await Api.Delete(id);
-        clientes = await Api.GetAll();
+        if (string.IsNullOrWhiteSpace(nome)) return "?";
+        var partes = nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return partes.Length == 1
+            ? partes[0][..1].ToUpper()
+            : $"{partes[0][0]}{partes[^1][0]}".ToUpper();
     }
 
-    async Task ConfirmarExclusao(int id)
-    {
-        if (await JS.InvokeAsync<bool>("confirm", "Deseja excluir este cliente?"))
-        {
-            await Api.Delete(id);
-            clientes = await Api.GetAll();
-        }
-    }
+    void Novo() => Nav.NavigateTo("/clientes/novo");
+    void Editar(int id) => Nav.NavigateTo($"/clientes/{id}");
+    void VerDetalhe(int id) => Nav.NavigateTo($"/clientes/{id}/detalhe");
 
     bool mostrarModal = false;
     int idSelecionado;
 
-    void AbrirModal(int id)
-    {
-        idSelecionado = id;
-        mostrarModal = true;
-    }
-
-    void FecharModal()
-    {
-        mostrarModal = false;
-    }
+    void AbrirModal(int id) { idSelecionado = id; mostrarModal = true; }
+    void FecharModal() => mostrarModal = false;
 
     async Task ExcluirConfirmado()
     {
         await Api.Delete(idSelecionado);
         clientes = await Api.GetAll();
         mostrarModal = false;
-    }
-
-    void VerDetalhe(int id)
-    {
-        Nav.NavigateTo($"/clientes/{id}/detalhe");
     }
 }

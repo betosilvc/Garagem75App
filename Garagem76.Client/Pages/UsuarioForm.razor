@@ -4,107 +4,206 @@
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
 @using Microsoft.AspNetCore.Authorization
+
 @inject UsuarioApi Api
 @inject TipoUsuarioApi TipoApi
 @inject NavigationManager Nav
 
-<h3>@(id.HasValue ? "Editar Usuário" : "Novo Usuário")</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<EditForm Model="usuario" OnValidSubmit="Salvar">
-    <DataAnnotationsValidator />
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-    <div class="form-grid">
+    .cli-topbar { margin-bottom: 28px; }
+    .cli-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .cli-title span { color: var(--accent); }
 
-        <div class="input-group">
-            <label>Nome</label>
-            <InputText class="input" @bind-Value="usuario.Nome" />
+    /* FORM CARD */
+    .form-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+    .cli-input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .cli-input:focus { border-color: var(--accent); }
+
+    /* ACTIONS */
+    .form-actions {
+        margin-top: 32px;
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn-save {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 2;
+        transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.9; }
+
+    .btn-cancel {
+        background: var(--surface2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        flex: 1;
+        transition: background 0.2s;
+        text-align: center;
+        text-decoration: none;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.05); }
+
+    .status-switch {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        font-size: 14px;
+    }
+
+    @@media (max-width: 480px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .full-width { grid-column: span 1; }
+    }
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">
+            @(id.HasValue ? "Configurações do Usuário" : "Cadastrar Colaborador")<span>.</span>
         </div>
-
-        <div class="input-group">
-            <label>Email</label>
-            <InputText class="input" @bind-Value="usuario.Email" />
-        </div>
-
-        <div class="input-group">
-            <label>Senha</label>
-            <InputText class="input" type="password" @bind-Value="usuario.Senha" />
-        </div>
-
-        <div class="input-group">
-            <label>Tipo Usuário</label>
-            <select class="input" @bind="usuario.TipoUsuarioId">
-                <option value="0">Selecione</option>
-                @foreach (var tipo in tipos)
-                {
-                    <option value="@tipo.IdTipoUsuario">
-                        @tipo.DescricaoTipoUsuario
-                    </option>
-                }
-            </select>
-        </div>
-
     </div>
 
-    <button class="btn btn-success">Salvar</button>
-</EditForm>
+    <div class="form-container">
+        <EditForm Model="usuario" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+            
+            <div class="form-grid">
+                <div class="input-group full-width">
+                    <label>Nome Completo</label>
+                    <InputText class="cli-input" @bind-Value="usuario.Nome" placeholder="Nome do mecânico ou admin" />
+                </div>
+
+                <div class="input-group full-width">
+                    <label>E-mail (Login)</label>
+                    <InputText class="cli-input" @bind-Value="usuario.Email" placeholder="exemplo@garagem75.com.br" />
+                </div>
+
+                <div class="input-group">
+                    <label>Senha</label>
+                    <InputText type="password" class="cli-input" @bind-Value="usuario.Senha" placeholder="••••••••" />
+                </div>
+
+                <div class="input-group">
+                    <label>Nível de Acesso</label>
+                    <select class="cli-input" @bind="usuario.TipoUsuarioId">
+                        <option value="0">Selecione o cargo...</option>
+                        @foreach (var tipo in tipos)
+                        {
+                            <option value="@tipo.IdTipoUsuario">
+                                @tipo.DescricaoTipoUsuario
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="input-group full-width">
+                    <div class="status-switch">
+                        <InputCheckbox @bind-Value="usuario.Ativo" id="user-ativo" />
+                        <label for="user-ativo" style="cursor:pointer; color: var(--text)">Usuário Ativo (Pode acessar o sistema)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">
+                    @(id.HasValue ? "Salvar Alterações" : "Criar Acesso")
+                </button>
+                <a class="btn-cancel" href="/usuarios">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     [Parameter] public int? id { get; set; }
-    UsuarioDto usuario = new();
+    UsuarioDto usuario = new() { Ativo = true }; // Por padrão, usuários novos começam ativos
     List<TipoUsuarioDto> tipos = new();
 
     protected override async Task OnInitializedAsync()
-
     {
-
         tipos = await TipoApi.GetAll();
- 
-        // Se houver um ID, significa que é EDIÇÃO
 
         if (id.HasValue)
-
         {
-
-            // Aqui você deve chamar o método GetById da sua API
-
             var resultado = await Api.GetById(id.Value);
-
             if (resultado != null)
-
             {
-
                 usuario = resultado;
-
             }
-
         }
-
     }
  
     async Task Salvar()
-
     {
-
         if (usuario.TipoUsuarioId == 0) return;
  
         if (id.HasValue)
-
-        {
-
-            await Api.Update(id.Value, usuario); // Lógica de atualização
-
-        }
-
+            await Api.Update(id.Value, usuario);
         else
-
-        {
-
-            await Api.Create(usuario); // Lógica de criação
-
-        }
+            await Api.Create(usuario);
  
-        Nav.NavigateTo("/usuarios"); // Talvez voltar para a lista em vez do login?
-
+        Nav.NavigateTo("/usuarios");
     }
- 
 }

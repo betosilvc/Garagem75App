@@ -10,7 +10,7 @@ namespace Garagem75.Api.Mappings
         {
             // 🔁 ENTITY → DTO
             CreateMap<OrdemServico, OrdemServicoDto>()
-                .ForMember(dest => dest.Pecas,
+                .ForMember(dest => dest.PecasAssociadas,
                     opt => opt.MapFrom(src => src.PecasAssociadas))
                 .ForMember(dest => dest.NomeCliente,
                     opt => opt.MapFrom(src => src.Veiculo != null && src.Veiculo.Cliente != null
@@ -27,6 +27,7 @@ namespace Garagem75.Api.Mappings
                     opt => opt.MapFrom(src => src.Peca != null
                         ? src.Peca.Nome
                         : ""))
+                .ForMember(dest => dest.MarcaPeca, opt => opt.MapFrom(src => src.Peca.Marca)) // 🔥 Adicione esta linha
                 .ForMember(dest => dest.PrecoUnitario,
                     opt => opt.MapFrom(src => src.PrecoUnitario));
 

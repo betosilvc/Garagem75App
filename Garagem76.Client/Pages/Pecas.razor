@@ -6,64 +6,204 @@
 @inject PecaApi Api
 @inject NavigationManager Nav
 
-<h3>Peças</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<button class="fab" @onclick="Novo">+</button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-@if (pecas == null)
-{
-    <p>Carregando...</p>
-}
-else
-{
-    <div class="filtros">
+    /* TOPBAR */
+    .cli-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+    .cli-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .cli-title span { color: var(--accent); }
+    
+    .cli-btn-novo {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-        <input class="form-control" placeholder="Buscar..."
+    /* FILTROS */
+    .filters-wrap {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .cli-search {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 16px;
+        color: var(--text);
+        outline: none;
+    }
+
+    .range-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .range-label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+    .range-label span { color: var(--accent); font-family: 'Space Mono', monospace; }
+
+    /* Estilização básica do Range */
+    input[type=range] {
+        width: 100%;
+        accent-color: var(--accent);
+        background: var(--surface2);
+        height: 6px;
+        border-radius: 5px;
+    }
+
+    /* GRID */
+    .cli-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .cli-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s, border-color 0.2s;
+        display: flex;
+        flex-direction: column;
+    }
+    .cli-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.15); }
+
+    .img-box {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+
+    .card-content { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; }
+    .p-nome { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .p-marca { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    
+    .p-footer {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .p-preco { font-family: 'Space Mono', monospace; color: var(--accent); font-size: 15px; }
+
+    .badge-estoque {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 700;
+    }
+    .estoque-baixo { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+    .estoque-ok { background: rgba(74,222,128,0.15); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+
+    .cli-empty { text-align: center; color: var(--muted); padding: 40px; }
+
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">Inventário de Peças<span>.</span></div>
+        <button class="cli-btn-novo" @onclick="Novo">+ Nova Peça</button>
+    </div>
+
+    <div class="filters-wrap">
+        <input class="cli-search" placeholder="Buscar por nome ou marca..."
                @bind="busca" @bind:event="oninput" />
 
-        <div class="range-box">
-            <label>Preço: R$ @precoMin - R$ @precoMax</label>
-
-            <input type="range" min="0" max="1000" step="10"
-                   @bind="precoMin" />
-
-            <input type="range" min="0" max="1000" step="10"
-                   @bind="precoMax" />
-        </div>
-
-    </div>
-
-    <div class="grid-app">
-        @foreach (var p in pecasFiltradas)
-        {
-            <div class="card-app" @onclick="() => Detalhe(p.IdPeca)">
-
-                <div class="img-container">
-                    <img src="@(string.IsNullOrEmpty(p.Imagem)
-                                                  ? "img/sem-imagem.png"
-                                                  : p.Imagem)"
-                         class="img-thumb" />
-
-                </div>
-
-                <div class="card-body">
-                    <strong>@p.Nome</strong>
-                    <p class="marca">@p.Marca</p>
-
-                    <span class="preco">R$ @p.Preco</span>
-
-                    <span class="badge @(p.QuantidadeEstoque < 5 ? "estoque-baixo" : "estoque-ok")">
-                        @p.QuantidadeEstoque
-                    </span>
-                </div>
-
+        <div class="range-container">
+            <div class="range-label">
+                Preço Mínimo: <span>R$ @precoMin</span>
             </div>
-        }
+            <input type="range" min="0" max="2000" step="10" @bind="precoMin" />
+            
+            <div class="range-label" style="margin-top: 8px;">
+                Preço Máximo: <span>R$ @precoMax</span>
+            </div>
+            <input type="range" min="0" max="10000" step="50" @bind="precoMax" />
+        </div>
     </div>
-}
+
+    @if (pecas == null)
+    {
+        <div class="cli-empty">Carregando catálogo...</div>
+    }
+    else if (!pecasFiltradas.Any())
+    {
+        <div class="cli-empty">Nenhuma peça corresponde aos filtros.</div>
+    }
+    else
+    {
+        <div class="cli-grid">
+            @foreach (var p in pecasFiltradas)
+            {
+                <div class="cli-card" @onclick="() => Detalhe(p.IdPeca)">
+                    <div class="img-box">
+                        <img src="@(string.IsNullOrEmpty(p.Imagem) ? "img/sem-imagem.png" : p.Imagem)" />
+                    </div>
+
+                    <div class="card-content">
+                        <div class="p-nome">@p.Nome</div>
+                        <div class="p-marca">@p.Marca</div>
+
+                        <div class="p-footer">
+                            <div class="p-preco">R$ @p.Preco.ToString("N2")</div>
+                            <span class="badge-estoque @(p.QuantidadeEstoque < 5 ? "estoque-baixo" : "estoque-ok")">
+                                @p.QuantidadeEstoque UN
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
 
 @code {
     List<PecaDto>? pecas;
+    string busca = "";
+    decimal precoMin = 0;
+    decimal precoMax = 10000;
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,15 +211,10 @@ else
     }
 
     void Novo() => Nav.NavigateTo("/pecas/novo");
-
     void Detalhe(int id) => Nav.NavigateTo($"/pecas/{id}");
 
-    string busca = "";
-    decimal precoMin = 0;
-    decimal precoMax = 10000;
-
     IEnumerable<PecaDto> pecasFiltradas =>
-        pecas.Where(p =>
+        (pecas ?? new()).Where(p =>
             (string.IsNullOrWhiteSpace(busca) ||
              p.Nome.Contains(busca, StringComparison.OrdinalIgnoreCase) ||
              p.Marca.Contains(busca, StringComparison.OrdinalIgnoreCase))
@@ -87,7 +222,4 @@ else
             p.Preco >= precoMin &&
             p.Preco <= precoMax
         );
-    
-
-    
 }

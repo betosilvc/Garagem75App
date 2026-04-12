@@ -5,73 +5,171 @@
 @using Microsoft.AspNetCore.Authorization
 
 @inject OrdemServicoApi Api
+@inject PecaApi PecasApi
 @inject NavigationManager Nav
 
-@inject PecaApi PecasApi
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<h3>OS #@model?.IdOrdemServico</h3>
-
-@if (model == null)
-{
-    <p>Carregando...</p>
-}
-else
-{
-    <p>Status: <strong>@model.Status</strong></p>
-
-    <p>Total: <span class="preco">R$ @model.ValorTotal</span></p>
-
-    <hr />
-
-    <h4>Adicionar Peça</h4>
-
-    <select @bind="pecaSelecionada">
-        @foreach (var p in pecas)
-        {
-            <option value="@p.IdPeca">@p.Nome</option>
-        }
-    </select>
-
-    <input type="number" @bind="qtd" />
-
-    <button class="btn btn-primary" @onclick="AddPeca">Adicionar</button>
-
-    <hr />
-
-    <h4>Peças</h4>
-
-    @foreach (var item in model.Pecas)
-    {
-        <div class="card-app">
-            <strong>@item.NomePeca</strong>
-            <p>Qtd: @item.Quantidade</p>
-
-            <button class="btn btn-danger"
-                    @onclick="() => Remover(item.PecaId)">
-                Remover
-            </button>
-        </div>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
     }
 
-    <button class="btn btn-success mt-3" @onclick="Finalizar">
-        Finalizar OS
-    </button>
-    @* ADICIONE ESTE BOTÃO AQUI *@
-    <button class="btn btn-primary mt-3" @onclick="SalvarAlteracoes">
-        Salvar Alterações
-    </button>
+    .edit-container { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+    /* HEADER */
+    .edit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .os-badge { font-family: 'Space Mono', monospace; color: var(--accent); font-size: 18px; }
+
+    /* CARD DE AÇÃO (ADICIONAR PEÇA) */
+    .action-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+    }
+    .action-title { font-size: 14px; font-weight: 600; margin-bottom: 15px; color: var(--muted); text-transform: uppercase; }
     
-    <button class="btn btn-secondary mt-3" @onclick="Voltar">
-        Voltar
-    </button>
-}
+    .add-peca-grid { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; }
+
+    .cli-input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+    }
+
+    /* LISTA DE PEÇAS */
+    .pecas-list { display: flex; flex-direction: column; gap: 10px; }
+    .peca-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .peca-info b { font-size: 14px; display: block; }
+    .peca-info span { font-size: 12px; color: var(--muted); }
+
+    /* FOOTER FINANCEIRO */
+    .total-display {
+        text-align: right;
+        padding: 20px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+    }
+    .total-label { font-size: 12px; color: var(--muted); }
+    .total-value { font-family: 'Space Mono', monospace; font-size: 24px; color: var(--accent); display: block; }
+
+    /* BOTÕES */
+    .btn-group-v { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .btn-cli { 
+        padding: 14px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none;
+        display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
+    }
+    .btn-add { background: var(--accent); color: #000; width: 44px; height: 44px; border-radius: 8px; }
+    .btn-save { background: var(--accent); color: #000; }
+    .btn-finish { background: transparent; border: 1px solid var(--success); color: #4ade80; }
+    .btn-back { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-del { background: rgba(248,113,113,0.1); color: var(--danger); padding: 8px; border-radius: 6px; font-size: 12px; }
+
+    @@media (max-width: 480px) { .add-peca-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="cli-shell">
+    <div class="edit-container">
+        
+        <div class="edit-header">
+            <div class="cli-title">Editar OS<span>.</span></div>
+            <div class="os-badge">#@model?.IdOrdemServico</div>
+        </div>
+
+        @if (model == null)
+        {
+            <div style="text-align:center; padding: 40px; color: var(--muted);">Buscando dados da ordem...</div>
+        }
+        else
+        {
+            <div class="total-display">
+                <span class="total-label">Total Acumulado</span>
+                <span class="total-value">R$ @model.ValorTotal.ToString("N2")</span>
+                <span style="font-size: 11px; color: var(--muted)">Status: @model.Status</span>
+            </div>
+
+            <div class="action-card">
+                <div class="action-title">Adicionar Peça ao Serviço</div>
+                <div class="add-peca-grid">
+                    <select class="cli-input" @bind="pecaSelecionada">
+                        <option value="0">Selecione uma peça...</option>
+                        @foreach (var p in pecas)
+                        {
+                            <option value="@p.IdPeca">@p.Nome (@p.Marca)</option>
+                        }
+                    </select>
+                    <input type="number" class="cli-input" min="1" @bind="qtd" placeholder="Qtd" />
+                    <button class="btn-add" @onclick="AddPeca">＋</button>
+                </div>
+            </div>
+
+            <div class="pecas-list">
+                <div class="action-title">Peças na OS (@model.PecasAssociadas.Count)</div>
+                @foreach (var item in model.PecasAssociadas)
+                {
+                    <div class="peca-item">
+                        <div class="peca-info">
+                            <b>@item.NomePeca</b>
+                            <span>Qtd: @item.Quantidade • @item.PrecoUnitario.ToString("C2")</span>
+                        </div>
+                        <button class="btn-del" @onclick="() => Remover(item.PecaId)">
+                            Remover
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <div class="btn-group-v">
+                <button class="btn-cli btn-save" @onclick="SalvarAlteracoes">
+                    💾 Salvar Alterações
+                </button>
+                
+                @if (model.Status != "Finalizada")
+                {
+                    <button class="btn-cli btn-finish" @onclick="Finalizar" style="border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.05)">
+                        🏁 Finalizar Ordem
+                    </button>
+                }
+
+                <button class="btn-cli btn-back" @onclick="Voltar">
+                    ⬅️ Voltar para Lista
+                </button>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
     [Parameter] public int id { get; set; }
-
     OrdemServicoDto? model;
     List<PecaDto> pecas = new();
-
     int pecaSelecionada;
     int qtd = 1;
 
@@ -83,8 +181,9 @@ else
 
     async Task AddPeca()
     {
+        if (pecaSelecionada == 0) return;
         await Api.AddPeca(id, pecaSelecionada, qtd);
-        qtd = 1; // Reseta a quantidade
+        qtd = 1;
         model = await Api.GetById(id);
     }
 
@@ -93,25 +192,21 @@ else
         await Api.RemovePeca(id, pecaId);
         model = await Api.GetById(id);
     }
+
     async Task SalvarAlteracoes()
     {
         if (model != null)
         {
-            // Envia o objeto inteiro para o Update da API (aquela lógica que arrumamos)
             await Api.Update(id, model);
-            
-            // Opcional: Navega de volta para a lista ou exibe um alerta
             Nav.NavigateTo("/os/");
         }
     }
 
-    void Voltar()
-    {
-        Nav.NavigateTo("/os/");
-    }
     async Task Finalizar()
     {
         await Api.Finalizar(id);
         model = await Api.GetById(id);
     }
+
+    void Voltar() => Nav.NavigateTo("/os/");
 }

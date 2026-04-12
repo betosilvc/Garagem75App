@@ -2,49 +2,220 @@
 @attribute [Authorize(Roles = "Administrador,Mecanico")]
 @using Garagem75.Shared.Dtos
 @using Microsoft.AspNetCore.Authorization
-<h3>OS #@model?.IdOrdemServico</h3>
 
-@if (model == null)
-{
-    <p>Carregando...</p>
-}
-else
-{
-    <div class="card-detalhe">
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-        <p><strong>Status:</strong> @model.Status</p>
-        <p><strong>Cliente:</strong> @model.NomeCliente</p>
-        <p><strong>Veículo:</strong> @model.VeiculoModelo</p>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 16px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-        <p><strong>Serviço:</strong></p>
-        <p>@model.Descricao</p>
+    .os-container {
+        max-width: 700px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
-        <p><strong>Mão de obra:</strong> R$ @model.MaoDeObra</p>
-        <p><strong>Desconto:</strong> R$ @model.ValorDesconto</p>
-        <hr />
-        <h5>Peças Utilizadas:</h5>
-        <ul>
-            @foreach (var p in model.Pecas)
-            {
-                <li>@p.NomePeca - @p.Quantidade x @p.PrecoUnitario.ToString("C2")</li>
-            }
-        </ul>
-        <p>
-            <strong>Total:</strong>
-            <span class="preco">R$ @model.ValorTotal.ToString("C2")</span>
-        </p>
+    /* HEADER DA OS */
+    .os-card-header {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .os-number { font-family: 'Space Mono', monospace; font-size: 20px; color: var(--accent); }
+    
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+    }
 
-        <button class="btn btn-primary mt-3"
-                @onclick="IrParaEdicao">
-            ✏️ Editar OS
-        </button>
+    /* INFOS GERAIS */
+    .os-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
 
+    .info-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+    }
+    .info-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .info-value { font-size: 15px; font-weight: 500; }
+
+    /* TABELA DE PEÇAS */
+    .pecas-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+    }
+    .pecas-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .pecas-table th { text-align: left; color: var(--muted); padding-bottom: 12px; font-weight: 500; }
+    .pecas-table td { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .pecas-table tr:last-child td { border-bottom: none; }
+
+    /* RESUMO FINANCEIRO */
+    .financeiro-card {
+        background: var(--surface2);
+        border: 1px solid var(--accent);
+        border-radius: var(--radius);
+        padding: 24px;
+    }
+    .fin-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+    .fin-total { 
+        margin-top: 12px; 
+        padding-top: 12px; 
+        border-top: 1px solid rgba(255,255,255,0.1); 
+        display: flex; 
+        justify-content: space-between; 
+        font-size: 20px; 
+        font-weight: 700; 
+        color: var(--accent);
+        font-family: 'Space Mono', monospace;
+    }
+
+    /* BOTÕES */
+    .actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn-os {
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: 0.2s;
+    }
+    .btn-edit { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-report { background: var(--accent); color: #000; }
+    .btn-os:hover { opacity: 0.8; transform: translateY(-1px); }
+
+    @@media (max-width: 480px) { .os-info-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="cli-shell">
+    <div class="os-container">
+        
+        <div class="cli-title" @onclick='() => Nav.NavigateTo("/os")' style="cursor:pointer">
+            ⬅️ Detalhes da Ordem<span>.</span>
+        </div>
+
+        @if (model == null)
+        {
+            <div style="text-align:center; padding: 40px; color: var(--muted);">Carregando dados da OS...</div>
+        }
+        else
+        {
+            <div class="os-card-header">
+                <div class="os-number">OS #@model.IdOrdemServico</div>
+                <div class="status-pill">@model.Status</div>
+            </div>
+
+            <div class="os-info-grid">
+                <div class="info-box">
+                    <div class="info-label">Cliente</div>
+                    <div class="info-value">@model.NomeCliente</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Veículo</div>
+                    <div class="info-value">🚗 @model.VeiculoModelo</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-label">Descrição do Serviço</div>
+                <div class="info-value" style="white-space: pre-wrap; line-height: 1.6;">@model.Descricao</div>
+            </div>
+
+            <div class="pecas-card">
+                <div class="info-label" style="margin-bottom: 15px;">Peças e Produtos</div>
+                <table class="pecas-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th style="text-align: center;">Qtd</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in model.PecasAssociadas)
+                        {
+                            <tr>
+                                <td>@p.NomePeca</td>
+                                <td style="text-align: center;">@p.Quantidade</td>
+                                <td style="text-align: right;">@((p.Quantidade * p.PrecoUnitario).ToString("C2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="financeiro-card">
+                <div class="fin-row">
+                    <span class="label">Mão de Obra</span>
+                    <span>@model.MaoDeObra.ToString("C2")</span>
+                </div>
+                <div class="fin-row">
+                    <span class="label">Total em Peças</span>
+                    <span>@model.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario).ToString("C2")</span>
+                </div>
+                @if (model.ValorDesconto > 0)
+                {
+                    <div class="fin-row" style="color: var(--danger)">
+                        <span class="label">Desconto</span>
+                        <span>- @model.ValorDesconto.ToString("C2")</span>
+                    </div>
+                }
+                <div class="fin-total">
+                    <span>TOTAL GERAL</span>
+                    <span>@model.ValorTotal.ToString("C2")</span>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button class="btn-os btn-edit" @onclick="IrParaEdicao">
+                    ✏️ Editar OS
+                </button>
+                @* <button class="btn-os btn-report" @onclick='() => Nav.NavigateTo($"/os/relatorio/{id}")'>
+                    📄 Relatório / Impressão
+                </button> *@
+            </div>
+        }
     </div>
-}
+</div>
 
 @code {
     [Parameter] public int id { get; set; }
-
     OrdemServicoDto? model;
 
     [Inject] OrdemServicoApi Api { get; set; }
@@ -52,23 +223,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
+        try {
             model = await Api.GetById(id);
-
-            if (model == null)
-            {
-                Console.WriteLine("OS não encontrada");
-            }
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             Console.WriteLine("Erro ao carregar OS: " + ex.Message);
         }
     }
 
-    void IrParaEdicao()
-    {
-        Nav.NavigateTo($"/os/editar/{id}");
-    }
+    void IrParaEdicao() => Nav.NavigateTo($"/os/editar/{id}");
 }

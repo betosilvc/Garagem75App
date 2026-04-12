@@ -7,57 +7,229 @@
 @inject PecaApi Api
 @inject NavigationManager Nav
 
-@if (peca == null)
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@@ DM Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
+
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 16px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
+
+    .detalhe-container {
+        max-width: 500px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* CARD DE IMAGEM */
+    .p-img-frame {
+        background: #000;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .p-img-full {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0.9;
+    }
+
+    /* INFO CARD */
+    .info-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+    }
+
+    .p-header {
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 15px;
+    }
+
+    .p-header h3 { margin: 0; font-size: 22px; font-weight: 600; }
+    .p-header .p-marca { color: var(--accent); font-size: 14px; font-weight: 500; margin-top: 4px; }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+        font-size: 14px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .label { color: var(--muted); }
+    .value { font-weight: 500; }
+    .price-value { font-family: 'Space Mono', monospace; color: var(--accent); font-size: 16px; }
+
+    /* BADGES */
+    .badge-estoque {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+    }
+    .bg-danger-soft { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+    .bg-success-soft { background: rgba(74,222,128,0.15); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+
+    /* AÇÕES */
+    .acoes-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .btn-cli {
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: opacity 0.2s;
+    }
+    .btn-edit { background: var(--surface2); color: var(--text); }
+    .btn-delete { background: rgba(248,113,113,0.1); color: var(--danger); border-color: rgba(248,113,113,0.2); }
+    .btn-cli:hover { opacity: 0.8; }
+
+    /* MODAL EXCLUIR */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+    }
+    .modal-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        width: 90%;
+        max-width: 350px;
+        text-align: center;
+    }
+</style>
+
+<div class="cli-shell">
+    <div class="detalhe-container">
+        
+        <div class="cli-title" @onclick='() => Nav.NavigateTo("/pecas")' style="cursor:pointer">
+            ⬅️ Detalhe da Peça<span>.</span>
+        </div>
+
+        @if (peca == null)
+        {
+            <div style="text-align:center; padding: 40px; color: var(--muted);">Carregando peça...</div>
+        }
+        else
+        {
+            <div class="p-img-frame">
+                <img src="@(string.IsNullOrEmpty(peca.Imagem) ? "img/sem-imagem.png" : peca.Imagem)" class="p-img-full" />
+            </div>
+
+            <div class="info-card">
+                <div class="p-header">
+                    <h3>@peca.Nome</h3>
+                    <div class="p-marca">@peca.Marca.ToUpper()</div>
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Código</span>
+                    <span class="value">#@peca.CodPeca</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Fornecedor</span>
+                    <span class="value">@peca.Fornecedor</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Preço Unitário</span>
+                    <span class="price-value">R$ @peca.Preco.ToString("N2")</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Disponibilidade</span>
+                    <span class="badge-estoque @(peca.QuantidadeEstoque < 5 ? "bg-danger-soft" : "bg-success-soft")">
+                        @(peca.QuantidadeEstoque < 5 ? "⚠️ ESTOQUE BAIXO" : "✅ EM ESTOQUE") (@peca.QuantidadeEstoque UN)
+                    </span>
+                </div>
+
+                <div class="acoes-grid">
+                    <button class="btn-cli btn-edit" @onclick="Editar">
+                        ✏️ Editar
+                    </button>
+                    <button class="btn-cli btn-delete" @onclick="AbrirModal">
+                        🗑️ Excluir
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* MODAL DE CONFIRMAÇÃO *@
+@if (mostrarModal)
 {
-    <p>Carregando...</p>
-}
-else
-{
-    <div class="card p-3">
-
-        <img src="@(string.IsNullOrEmpty(peca.Imagem) ? "img/sem-imagem.png" : peca.Imagem)" class="img-full" />
-
-        <h4>@peca.Nome</h4>
-        <p><strong>Marca:</strong> @peca.Marca</p>
-        <p><strong>Fornecedor:</strong> @peca.Fornecedor</p>
-
-        <p><strong>Preço:</strong> R$ @peca.Preco</p>
-
-        <p>
-            <strong>Estoque:</strong>
-            <span class="badge @(peca.QuantidadeEstoque < 5 ? "bg-danger" : "bg-success")">
-                @peca.QuantidadeEstoque
-            </span>
-        </p>
-        <div class=" acoes">
-            <button class="btn btn-primary mt-3" @onclick="Editar">Editar</button>
-            <button class="btn btn-danger mt-3" @onclick="Excluir">Excluir</button>
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+            <h4 style="margin-bottom: 10px;">Excluir Peça?</h4>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 24px;">
+                Deseja realmente remover <strong>@peca?.Nome</strong> do inventário? Esta ação é irreversível.
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cli btn-edit" style="flex:1" @onclick="FecharModal">Cancelar</button>
+                <button class="btn-cli btn-delete" style="flex:1; background: var(--danger); color: #000;" @onclick="ExcluirConfirmado">Sim, Excluir</button>
+            </div>
         </div>
     </div>
 }
 
 @code {
     [Parameter] public int id { get; set; }
-
     PecaDto? peca;
+    bool mostrarModal = false;
 
     protected override async Task OnInitializedAsync()
     {
         peca = await Api.GetById(id);
     }
 
-    void Editar()
+    void Editar() => Nav.NavigateTo($"/pecas/editar/{id}");
+
+    void AbrirModal() => mostrarModal = true;
+    void FecharModal() => mostrarModal = false;
+
+    async Task ExcluirConfirmado()
     {
-        Nav.NavigateTo($"/pecas/editar/{id}");
-    }
-
-    async Task Excluir()
-    {
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Deseja excluir esta peça?");
-
-        if (!confirm)
-            return;
-
         await Api.Delete(id);
         Nav.NavigateTo("/pecas");
     }

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using Garagem75.Shared.Dtos;
+using System.Net.Http.Json;
 
 public class DashboardApi
 {
@@ -17,10 +18,15 @@ public class DashboardApi
 
     public async Task<List<ItemGrafico>> GetMarcasPecas()
         => await _http.GetFromJsonAsync<List<ItemGrafico>>("api/dashboard/marcas-pecas");
+
+    public async Task<DashboardDto> GetDashboard()
+        => await _http.GetFromJsonAsync<DashboardDto>("api/dashboard");
 }
 
+// ── Gráficos simples ──────────────────────────────────────────────
 public class ItemGrafico
 {
     public string Nome { get; set; }
     public int Total { get; set; }
 }
+

@@ -1,109 +1,220 @@
 ﻿@page "/usuarios/{id:int}"
 @using Garagem75.Shared.Dtos
 @using Garagem76.Client.Services
-
 @inject UsuarioApi Api
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-@if (loading)
-{
-    <div class="loading">Carregando...</div>
-}
-else if (usuario == null)
-{
-    <p>Usuário não encontrado</p>
-}
-else
-{
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
+
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --radius: 16px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
+
+    .detalhe-container {
+        max-width: 450px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* CARD DE PERFIL */
+    .profile-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px 24px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .u-avatar-large {
+        width: 80px;
+        height: 80px;
+        background: var(--surface2);
+        border: 2px solid var(--accent);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--accent);
+        margin: 0 auto 16px;
+        font-family: 'Space Mono', monospace;
+        box-shadow: 0 0 20px rgba(232, 255, 71, 0.1);
+    }
+
+    .u-status-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 20px;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    .badge-ativo { background: rgba(74,222,128,0.1); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .badge-inativo { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+
+    .u-nome { font-size: 24px; font-weight: 600; margin: 0; }
+    .u-cargo { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+    /* INFO CARD */
+    .info-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .info-label { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+    .info-value { font-size: 15px; color: var(--text); }
+
+    /* AÇÕES */
+    .acoes-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-cli {
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-edit { background: var(--accent); color: #000; }
+    .btn-toggle { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger-text { color: var(--danger); border-color: rgba(248,113,113,0.2); }
+    .btn-cli:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    .loading-box { text-align: center; color: var(--muted); padding: 60px 0; }
+</style>
+
+<div class="cli-shell">
     <div class="detalhe-container">
+        
+        <div class="cli-title" @onclick='() => Nav.NavigateTo("/usuarios")' style="cursor:pointer">
+            ⬅️ Perfil da Equipe<span>.</span>
+        </div>
 
-        <!-- HEADER -->
-        <div class="detalhe-header">
-            <div class="avatar">
-                @usuario.Nome.Substring(0, 1)
+        @if (loading)
+        {
+            <div class="loading-box">Carregando perfil...</div>
+        }
+        else if (usuario == null)
+        {
+            <div class="profile-card">
+                <p>⚠️ Usuário não encontrado.</p>
+                <button class="btn-cli btn-toggle" @onclick='() => Nav.NavigateTo("/usuarios")'>Voltar</button>
+            </div>
+        }
+        else
+        {
+            <div class="profile-card">
+                <div class="u-status-badge @(usuario.Ativo ? "badge-ativo" : "badge-inativo")">
+                    @(usuario.Ativo ? "Acesso Ativo" : "Acesso Bloqueado")
+                </div>
+                
+                <div class="u-avatar-large">@usuario.Nome[..1].ToUpper()</div>
+                
+                <h2 class="u-nome">@usuario.Nome</h2>
+                <div class="u-cargo">@usuario.TipoUsuario?.DescricaoTipoUsuario</div>
             </div>
 
-            <div>
-                <h2>@usuario.Nome</h2>
-
-                <span class="badge @(usuario.Ativo ? "ativo" : "inativo")">
-                    @(usuario.Ativo ? "Ativo" : "Inativo")
-                </span>
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">E-mail para Login</span>
+                    <span class="info-value">@usuario.Email</span>
+                </div>
             </div>
-        </div>
 
-        <!-- INFO -->
-        <div class="detalhe-card">
-            <p><strong>Email</strong></p>
-            <span>@usuario.Email</span>
-        </div>
-
-        <!-- AÇÕES -->
-        <div class="acoes">
-
-            <button class="btn-editar" @onclick="Editar">
-                ✏️ Editar
-            </button>
-
-            @if (usuario.Ativo)
-            {
-                <button class="btn-excluir" @onclick="Desativar">
-                    🗑️ Desativar
+            <div class="acoes-stack">
+                <button class="btn-cli btn-edit" @onclick="Editar">
+                    ✏️ Editar Dados
                 </button>
-            }
-            else
-            {
-                <button class="btn-reativar" @onclick="Reativar">
-                    ♻️ Reativar
-                </button>
-            }
 
-        </div>
-
+                @if (usuario.Ativo)
+                {
+                    <button class="btn-cli btn-toggle btn-danger-text" @onclick="Desativar">
+                        🔒 Bloquear Acesso
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-cli btn-toggle" style="color: var(--success)" @onclick="Reativar">
+                        ♻️ Reativar Usuário
+                    </button>
+                }
+            </div>
+        }
     </div>
-}
+</div>
 
+@code {
+    [Parameter] public int id { get; set; }
+    UsuarioDto? usuario;
+    bool loading = true;
 
-    @code {
-        [Parameter] public int id { get; set; }
-
-        UsuarioDto? usuario;
-        bool loading = true;
-
-        protected override async Task OnInitializedAsync()
-        {
-            try
-            {
-                usuario = await Api.GetById(id);
-            }
-            catch
-            {
-                usuario = null;
-            }
-            finally
-            {
-                loading = false;
-            }
-        }
-
-        void Editar()
-        {
-            Nav.NavigateTo($"/usuarios/editar/{id}");    
-        }
-
-        async Task Desativar()
-        {
-            var ok = await JS.InvokeAsync<bool>("confirm", "Deseja desativar?");
-            if (!ok) return;
-
-            await Api.Delete(id);
-            Nav.NavigateTo("/usuarios");
-        }
-
-        async Task Reativar()
-        {
-            await Api.Reativar(id); // precisa ter na API
-            Nav.NavigateTo("/usuarios");
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            usuario = await Api.GetById(id);
+        } catch {
+            usuario = null;
+        } finally {
+            loading = false;
         }
     }
+
+    void Editar() => Nav.NavigateTo($"/usuarios/editar/{id}");
+
+    async Task Desativar()
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "Deseja realmente bloquear este usuário? Ele não poderá mais logar.");
+        if (!ok) return;
+
+        await Api.Delete(id);
+        Nav.NavigateTo("/usuarios");
+    }
+
+    async Task Reativar()
+    {
+        // Certifique-se que o método Reativar existe na sua UsuarioApi
+        await Api.Reativar(id); 
+        Nav.NavigateTo("/usuarios");
+    }
+}

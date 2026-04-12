@@ -14,15 +14,23 @@ public class DashboardController : ControllerBase
         _context = context;
     }
 
-    // 💰 FATURAMENTO DO DIA
     [HttpGet("faturamento-dia")]
     public async Task<decimal> GetFaturamentoDia()
     {
         var hoje = DateTime.Today;
 
-        return await _context.OrdemServicos
+        // Buscamos as OS do dia incluindo as peças para o cálculo ser real
+        var ordensDoDia = await _context.OrdemServicos
+            .Include(x => x.PecasAssociadas)
             .Where(x => x.DataServico.Date == hoje)
-            .SumAsync(x => (decimal?)x.ValorTotal) ?? 0;
+            .ToListAsync();
+
+        // Recalcula tudo na memória para garantir que o valor está certo
+        var total = ordensDoDia.Sum(os =>
+            (os.MaoDeObra + os.PecasAssociadas.Sum(p => p.Quantidade * p.PrecoUnitario)) - os.ValorDesconto
+        );
+
+        return total;
     }
 
     // 🚗 FABRICANTES

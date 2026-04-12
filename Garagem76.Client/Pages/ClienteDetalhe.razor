@@ -7,80 +7,329 @@
 @inject VeiculoApi VeiculoApi
 @inject NavigationManager Nav
 
-<div class="app-container">
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-    <!-- HEADER -->
-    <div class="header">
-        <button class="back" @onclick="Voltar">←</button>
-        <div>
-            <h2>@cliente?.Nome</h2>
-            <span>@cliente?.Telefone</span>
-        </div>
+    .cd-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+        padding-bottom: 80px;
+    }
+
+    /* TOPBAR */
+    .cd-topbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+    .cd-back {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.15s;
+        flex-shrink: 0;
+    }
+    .cd-back:hover { background: var(--surface2); }
+
+    /* HERO */
+    .cd-hero {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .cd-avatar {
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Space Mono', monospace;
+        font-size: 17px; font-weight: 700;
+        color: var(--accent);
+        flex-shrink: 0;
+    }
+    .cd-hero-nome {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.4px;
+        line-height: 1.2;
+    }
+    .cd-hero-tel {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    /* SECTION */
+    .cd-section {
+        margin-top: 28px;
+    }
+    .cd-section-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* CARDS */
+    .cd-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+        transition: border-color 0.2s;
+    }
+    .cd-card.clickable {
+        cursor: pointer;
+    }
+    .cd-card.clickable:hover {
+        border-color: rgba(255,255,255,0.14);
+    }
+
+    .cd-card-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        background: var(--surface2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .cd-card-info { flex: 1; min-width: 0; }
+    .cd-card-title {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .cd-card-sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+    .cd-card-arrow {
+        font-size: 14px;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    .cd-icon-btn {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--surface2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        flex-shrink: 0;
+    }
+    .cd-icon-btn.danger:hover {
+        background: rgba(248,113,113,0.12);
+        border-color: rgba(248,113,113,0.3);
+    }
+
+    /* PLACA PILL */
+    .cd-placa {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        font-family: 'Space Mono', monospace;
+        background: rgba(79,156,249,0.12);
+        color: #4f9cf9;
+    }
+
+    /* EMPTY */
+    .cd-empty {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 14px 0;
+    }
+
+    /* FAB */
+    .cd-fab {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        font-size: 24px;
+        font-weight: 300;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 20px rgba(232,255,71,0.25);
+        transition: opacity 0.15s, transform 0.15s;
+    }
+    .cd-fab:hover { opacity: 0.88; transform: scale(1.05); }
+
+    /* MODAL */
+    .cd-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000;
+    }
+    .cd-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        width: 100%;
+        max-width: 360px;
+    }
+    .cd-modal-title { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+    .cd-modal-body { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+    .cd-modal-footer { display: flex; gap: 10px; justify-content: flex-end; }
+    .cd-btn-cancel {
+        background: var(--surface2); border: 1px solid var(--border);
+        color: var(--text); border-radius: 8px; padding: 8px 18px;
+        font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .cd-btn-cancel:hover { background: rgba(255,255,255,0.08); }
+    .cd-btn-danger {
+        background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.3);
+        color: var(--danger); border-radius: 8px; padding: 8px 18px;
+        font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+        transition: background 0.15s;
+    }
+    .cd-btn-danger:hover { background: rgba(248,113,113,0.25); }
+</style>
+
+<div class="cd-shell">
+
+    <!-- TOPBAR -->
+    <div class="cd-topbar">
+        <div class="cd-back" @onclick="Voltar">←</div>
+        @if (cliente != null)
+        {
+            <div class="cd-hero">
+                <div class="cd-avatar">@Iniciais(cliente.Nome)</div>
+                <div>
+                    <div class="cd-hero-nome">@cliente.Nome</div>
+                    <div class="cd-hero-tel">@cliente.Telefone</div>
+                </div>
+            </div>
+        }
     </div>
 
     @if (cliente == null)
     {
-        <p>Carregando...</p>
+        <div style="color:var(--muted);font-size:14px">Carregando...</div>
     }
     else
     {
-        <!-- ENDEREÇO -->
-        <div class="section">
-            <h4>📍 Endereços</h4>
+        <!-- ENDEREÇOS -->
+        <div class="cd-section">
+            <div class="cd-section-label">Endereços</div>
 
             @if (!cliente.Enderecos.Any())
             {
-                <p>Nenhum endereço</p>
+                <div class="cd-empty">Nenhum endereço cadastrado.</div>
             }
             else
             {
                 @foreach (var e in cliente.Enderecos)
                 {
-                    <div class="card-app">
-                        <div>
-                            <strong>@e.Rua, @e.Numero</strong>
-                            <p>@e.Bairro - @e.Cidade/@e.Uf</p>
+                    <div class="cd-card">
+                        <div class="cd-card-icon">📍</div>
+                        <div class="cd-card-info">
+                            <div class="cd-card-title">@e.Rua, @e.Numero</div>
+                            <div class="cd-card-sub">@e.Bairro — @e.Cidade/@e.Uf</div>
                         </div>
-
-                        <button class="btn-delete"
-                                @onclick:stopPropagation="true"
-                                @onclick="() => ExcluirEndereco(e.IdEndereco)">
-                            🗑️
-                        </button>
+                        <div class="cd-icon-btn danger"
+                             @onclick:stopPropagation="true"
+                             @onclick="() => AbrirModalEndereco(e.IdEndereco)"
+                             title="Excluir endereço">🗑️</div>
                     </div>
                 }
             }
         </div>
 
         <!-- VEÍCULOS -->
-        <div class="section">
-            <h4>🚗 Veículos</h4>
+        <div class="cd-section">
+            <div class="cd-section-label">Veículos</div>
 
             @if (!veiculos.Any())
             {
-                <p>Nenhum veículo cadastrado</p>
+                <div class="cd-empty">Nenhum veículo cadastrado.</div>
             }
             else
             {
                 @foreach (var v in veiculos)
                 {
-                    <div class="card-app" @onclick="() => VerVeiculo(v.IdVeiculo)">
-                        <div>
-                            <strong>@v.Modelo</strong>
-                            <p>@v.Placa</p>
+                    <div class="cd-card clickable" @onclick="() => VerVeiculo(v.IdVeiculo)">
+                        <div class="cd-card-icon">🚗</div>
+                        <div class="cd-card-info">
+                            <div class="cd-card-title">@v.Modelo</div>
+                            <div class="cd-card-sub">
+                                @v.Fabricante &nbsp;
+                                <span class="cd-placa">@v.Placa</span>
+                            </div>
                         </div>
-
-                        <span>➡️</span>
+                        <div class="cd-card-arrow">›</div>
                     </div>
                 }
             }
         </div>
     }
 
-    <!-- BOTÃO FLUTUANTE -->
-    <button class="fab" @onclick="NovoVeiculo">+</button>
-
 </div>
+
+<!-- FAB -->
+<button class="cd-fab" @onclick="NovoVeiculo" title="Novo veículo">+</button>
+
+<!-- MODAL EXCLUIR ENDEREÇO -->
+@if (mostrarModal)
+{
+    <div class="cd-modal-overlay">
+        <div class="cd-modal">
+            <div class="cd-modal-title">Excluir endereço</div>
+            <div class="cd-modal-body">
+                Esta ação não pode ser desfeita.<br />
+                Tem certeza que deseja excluir este endereço?
+            </div>
+            <div class="cd-modal-footer">
+                <button class="cd-btn-cancel" @onclick="FecharModal">Cancelar</button>
+                <button class="cd-btn-danger" @onclick="ConfirmarExclusaoEndereco">Excluir</button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter] public int id { get; set; }
@@ -88,39 +337,41 @@
     ClienteDto? cliente;
     List<VeiculoDto> veiculos = new();
 
+    bool mostrarModal = false;
+    int idEnderecoSelecionado;
+
     protected override async Task OnInitializedAsync()
     {
         cliente = await ClienteApi.GetById(id);
-
         var todos = await VeiculoApi.GetAll();
         veiculos = todos.Where(v => v.ClienteId == id).ToList();
     }
 
-    void Voltar()
+    string Iniciais(string? nome)
     {
-        Nav.NavigateTo("/clientes");
+        if (string.IsNullOrWhiteSpace(nome)) return "?";
+        var partes = nome.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return partes.Length == 1
+            ? partes[0][..1].ToUpper()
+            : $"{partes[0][0]}{partes[^1][0]}".ToUpper();
     }
 
-    void VerVeiculo(int id)
+    void Voltar() => Nav.NavigateTo("/clientes");
+    void VerVeiculo(int veiculoId) => Nav.NavigateTo($"/veiculos/{veiculoId}");
+    void NovoVeiculo() => Nav.NavigateTo($"/veiculos/novo?clienteId={id}");
+
+    void AbrirModalEndereco(int idEndereco)
     {
-        Nav.NavigateTo($"/veiculos/{id}");
+        idEnderecoSelecionado = idEndereco;
+        mostrarModal = true;
     }
 
-    void NovoVeiculo()
+    void FecharModal() => mostrarModal = false;
+
+    async Task ConfirmarExclusaoEndereco()
     {
-        Nav.NavigateTo($"/veiculos/novo?clienteId={id}");
-    }
-
-    async Task ExcluirEndereco(int idEndereco)
-    {
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Excluir endereço?");
-
-        if (!confirm)
-            return;
-
-        await ClienteApi.DeleteEndereco(idEndereco);
-
-        // 🔄 recarrega cliente
+        await ClienteApi.DeleteEndereco(idEnderecoSelecionado);
         cliente = await ClienteApi.GetById(id);
+        mostrarModal = false;
     }
 }

@@ -11,104 +11,296 @@
 @inject ClienteApi Api
 @inject NavigationManager Nav
 
-<h3 class="page-title">
-    @(id == null ? "Novo Cliente" : "Editar Cliente")
-</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<div class="card app-card">
+    .cf-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --border-focus: rgba(232,255,71,0.4);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
+
+    /* TOPBAR */
+    .cf-topbar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+    .cf-back {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-decoration: none;
+        color: var(--text);
+    }
+    .cf-back:hover { background: var(--surface2); }
+    .cf-title {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.4px;
+    }
+    .cf-title span { color: var(--accent); }
+
+    /* CARD */
+    .cf-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px;
+        margin-bottom: 16px;
+    }
+
+    .cf-section-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* FORM GRID */
+    .cf-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 8px;
+    }
+    .cf-grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+    }
+    .cf-full { grid-column: 1 / -1; }
+
+    .cf-field { display: flex; flex-direction: column; gap: 6px; }
+    .cf-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .cf-input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cf-input::placeholder { color: var(--muted); }
+    .cf-input:focus { border-color: var(--border-focus); }
+
+    /* validation */
+    .validation-message { font-size: 11px; color: var(--danger); margin-top: 2px; }
+
+    /* ENDEREÇOS */
+    .cf-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+    }
+
+    .cf-addr-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .cf-addr-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .cf-btn-add {
+        margin-top: 18px;
+        background: transparent;
+        border: 1px dashed rgba(255,255,255,0.15);
+        border-radius: 8px;
+        color: var(--muted);
+        padding: 10px 18px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s;
+        width: 100%;
+    }
+    .cf-btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ACTIONS */
+    .cf-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 24px;
+    }
+    .cf-btn-salvar {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 11px 28px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .cf-btn-salvar:hover:not(:disabled) { opacity: 0.88; }
+    .cf-btn-salvar:disabled { opacity: 0.4; cursor: not-allowed; }
+    .cf-btn-cancel {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 11px 22px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .cf-btn-cancel:hover { background: rgba(255,255,255,0.07); }
+
+    @@media (max-width: 640px) {
+        .cf-grid { grid-template-columns: 1fr; }
+        .cf-grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @@media (max-width: 420px) {
+        .cf-grid-3 { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="cf-shell">
+
+    <div class="cf-topbar">
+        <span class="cf-back" @onclick="Voltar">←</span>
+        <div class="cf-title">
+            @(id == null ? "Novo cliente" : "Editar cliente")<span>.</span>
+        </div>
+    </div>
 
     <EditForm Model="cliente" OnValidSubmit="Salvar" OnFieldChanged="ValidarCampo">
         <DataAnnotationsValidator />
-        <ValidationSummary />
 
-        <div class="form-grid">
+        <!-- DADOS PESSOAIS -->
+        <div class="cf-card">
+            <div class="cf-section-label">Dados pessoais</div>
 
-            <div class="input-group">
-                <label>Nome</label>
-                <InputText class="input" @bind-Value="cliente.Nome" placeholder="Digite o nome" />
-                <ValidationMessage For="@(() => cliente.Nome)" />
-            </div>
+            <div class="cf-grid">
+                <div class="cf-field cf-full">
+                    <label class="cf-label">Nome</label>
+                    <InputText class="cf-input" @bind-Value="cliente.Nome" placeholder="Nome completo" />
+                    <ValidationMessage For="@(() => cliente.Nome)" />
+                </div>
 
-            <div class="input-group">
-                <label>CPF</label>
-                <InputText class="input" @bind-Value="cliente.Cpf" @oninput="FormatarCpf" placeholder="000.000.000-00" />
-                <ValidationMessage For="@(() => cliente.Cpf)" />
-            </div>
+                <div class="cf-field">
+                    <label class="cf-label">CPF</label>
+                    <InputText class="cf-input" @bind-Value="cliente.Cpf"
+                               @oninput="FormatarCpf" placeholder="000.000.000-00" />
+                    <ValidationMessage For="@(() => cliente.Cpf)" />
+                </div>
 
-            <div class="input-group">
-                <label>Telefone</label>
-                <InputText class="input" @bind-Value="cliente.Telefone" placeholder="(11) 99999-9999" />
-                <ValidationMessage For="@(() => cliente.Telefone)" />
-            </div>
+                <div class="cf-field">
+                    <label class="cf-label">Telefone</label>
+                    <InputText class="cf-input" @bind-Value="cliente.Telefone"
+                               placeholder="(11) 99999-9999" />
+                    <ValidationMessage For="@(() => cliente.Telefone)" />
+                </div>
 
-            <div class="input-group">
-                <label>Email</label>
-                <InputText class="input" @bind-Value="cliente.Email" type="email" placeholder="email@email.com" />
-                <ValidationMessage For="@(() => cliente.Email)" />
-            </div>
-
-        </div>
-        <hr />
-
-        <h5>Endereço</h5>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label>CEP</label>
-                <InputText class="form-control"
-                           @bind-Value="enderecoAtual.Cep"
-                           @onblur="BuscarCep" />
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label>Rua</label>
-                <InputText class="form-control" @bind-Value="enderecoAtual.Rua" />
-            </div>
-
-            <div class="col-md-2 mb-3">
-                <label>Número</label>
-                <InputNumber class="form-control" @bind-Value="enderecoAtual.Numero" />
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Bairro</label>
-                <InputText class="form-control" @bind-Value="enderecoAtual.Bairro" />
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label>Cidade</label>
-                <InputText class="form-control" @bind-Value="enderecoAtual.Cidade" />
-            </div>
-
-            <div class="col-md-2 mb-3">
-                <label>UF</label>
-                <InputText class="form-control" @bind-Value="enderecoAtual.Uf" />
+                <div class="cf-field cf-full">
+                    <label class="cf-label">Email</label>
+                    <InputText class="cf-input" @bind-Value="cliente.Email"
+                               type="email" placeholder="email@email.com" />
+                    <ValidationMessage For="@(() => cliente.Email)" />
+                </div>
             </div>
         </div>
 
-        <button type="button" class="btn btn-secondary" @onclick="AdicionarEndereco">
-            + Adicionar Endereço
-        </button>
+        <!-- ENDEREÇO -->
+        <div class="cf-card">
+            <div class="cf-section-label">Endereço</div>
 
-        @if (cliente.Enderecos.Any())
-        {
-            <ul class="list-group mt-3">
-                @foreach (var e in cliente.Enderecos)
-                {
-                    <li class="list-group-item">
-                        @e.Rua, @e.Numero - @e.Cidade/@e.Uf
-                    </li>
-                }
-            </ul>
-        }
+            <div class="cf-grid">
+                <div class="cf-field">
+                    <label class="cf-label">CEP</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Cep"
+                               @onblur="BuscarCep" placeholder="00000-000" />
+                </div>
 
+                <div class="cf-field">
+                    <label class="cf-label">Bairro</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Bairro" />
+                </div>
 
-        <div class="form-actions">
-            <button class="btn-primary" disabled="@salvando">
-                @(salvando ? "Salvando..." : "Salvar")
+                <div class="cf-field cf-full">
+                    <label class="cf-label">Rua</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Rua" />
+                </div>
+
+                <div class="cf-field">
+                    <label class="cf-label">Número</label>
+                    <InputNumber class="cf-input" @bind-Value="enderecoAtual.Numero" />
+                </div>
+
+                <div class="cf-field">
+                    <label class="cf-label">Cidade</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Cidade" />
+                </div>
+
+                <div class="cf-field">
+                    <label class="cf-label">UF</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Uf"
+                               placeholder="SP" style="max-width:80px" />
+                </div>
+            </div>
+
+            <button type="button" class="cf-btn-add" @onclick="AdicionarEndereco">
+                + Adicionar endereço
             </button>
 
-            <button type="button" class="btn-secondary" @onclick="Voltar">
-                Cancelar
+            @if (cliente.Enderecos.Any())
+            {
+                <div class="cf-addr-list">
+                    @foreach (var e in cliente.Enderecos)
+                    {
+                        <div class="cf-addr-item">
+                            @e.Rua, @e.Numero — @e.Bairro, @e.Cidade/@e.Uf
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="cf-actions">
+            <button type="button" class="cf-btn-cancel" @onclick="Voltar">Cancelar</button>
+            <button type="submit" class="cf-btn-salvar" disabled="@salvando">
+                @(salvando ? "Salvando..." : "Salvar cliente")
             </button>
         </div>
 
@@ -122,7 +314,6 @@
     {
         Enderecos = new List<EnderecoDto>()
     };
-    
 
     protected override async Task OnInitializedAsync()
     {
@@ -134,11 +325,7 @@
         }
     }
 
-
-    void Voltar()
-    {
-        Nav.NavigateTo("/clientes");
-    }
+    void Voltar() => Nav.NavigateTo("/clientes");
 
     bool salvando = false;
 
@@ -146,7 +333,6 @@
     {
         salvando = true;
 
-        // 🔍 DEBUG
         Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(cliente));
 
         if (id == null)
@@ -155,23 +341,17 @@
             await Api.Update(id.Value, cliente);
 
         salvando = false;
-
         Nav.NavigateTo("/clientes");
     }
+
     void FormatarCpf(ChangeEventArgs e)
     {
         var valor = e.Value?.ToString()?.Replace(".", "").Replace("-", "") ?? "";
-
-        if (valor.Length > 11)
-            valor = valor[..11];
-
+        if (valor.Length > 11) valor = valor[..11];
         cliente.Cpf = valor;
     }
 
-    void ValidarCampo(object? sender, FieldChangedEventArgs e)
-    {
-        // já ativa validação automática
-    }
+    void ValidarCampo(object? sender, FieldChangedEventArgs e) { }
 
     EnderecoDto enderecoAtual = new();
 
@@ -186,18 +366,14 @@
             Uf = enderecoAtual.Uf,
             Cep = enderecoAtual.Cep
         });
-
         enderecoAtual = new();
     }
 
-
     async Task BuscarCep()
     {
-        if (string.IsNullOrWhiteSpace(enderecoAtual.Cep))
-            return;
+        if (string.IsNullOrWhiteSpace(enderecoAtual.Cep)) return;
 
         var cep = enderecoAtual.Cep.Replace("-", "");
-
         var endereco = await Http.GetFromJsonAsync<ViaCepResponse>(
             $"https://viacep.com.br/ws/{cep}/json/");
 

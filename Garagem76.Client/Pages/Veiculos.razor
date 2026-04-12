@@ -5,54 +5,193 @@
 @inject VeiculoApi Api
 @inject NavigationManager Nav
 
-<h3>Veículos</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<button class="fab" @onclick="Novo">+</button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47; /* Amarelo Garagem 75 */
+        --text: #f0f0f0;
+        --muted: #888888;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-@if (veiculos == null)
-{
-    <p>Carregando...</p>
-}
-else if (veiculos.Count == 0)
-{
-    <p>Nenhum veículo cadastrado</p>
-}
-else
-{
-    <div class="grid-app">
-        @foreach (var v in veiculos)
-        {
-            <div class="card-veiculo">
+    /* TOPBAR */
+    .cli-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+    .cli-title {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+    }
+    .cli-title span { color: var(--accent); }
+    .cli-btn-novo {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
+    .cli-btn-novo:hover { opacity: 0.88; }
 
-                <!-- VEÍCULO (clicável) -->
-                <div class="veiculo-info" @onclick="() => AbrirVeiculo(v.IdVeiculo)">
-                    <strong>@v.Fabricante @v.Modelo</strong>
-                    <p>@v.Placa • @v.Ano • @v.Cor</p>
-                </div>
+    /* BUSCA */
+    .cli-search-wrap { margin-bottom: 20px; }
+    .cli-search {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-family: 'DM Sans', sans-serif;
+        color: var(--text);
+        outline: none;
+    }
 
-                <!-- CLIENTE (clicável separado) -->
-                <div class="cliente-info" @onclick="() => AbrirCliente(v.ClienteId)">
-                    👤 @v.ClienteNome
-                </div>
+    /* GRID */
+    .cli-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 12px;
+    }
 
-            </div>
-        }
+    .cli-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform 0.15s;
+    }
+    .cli-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.15); }
+
+    /* INFO VEICULO */
+    .v-header { display: flex; align-items: flex-start; justify-content: space-between; cursor: pointer; }
+    .v-meta { flex: 1; }
+    .v-modelo { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .v-placa-badge {
+        font-family: 'Space Mono', monospace;
+        font-size: 11px;
+        background: var(--surface2);
+        color: var(--accent);
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+    }
+    .v-detalhes { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    /* INFO CLIENTE (Link Separado) */
+    .v-cliente-link {
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.2s;
+        border: 1px solid transparent;
+    }
+    .v-cliente-link:hover { background: rgba(255,255,255,0.07); border-color: var(--border); }
+    .v-cliente-avatar { color: var(--accent); font-size: 14px; }
+
+    .cli-empty { text-align: center; color: var(--muted); padding: 60px 0; }
+
+    @@media (max-width: 480px) { .cli-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">Veículos<span>.</span></div>
+        <button class="cli-btn-novo" @onclick="Novo">+ Novo veículo</button>
     </div>
-}
+
+    <div class="cli-search-wrap">
+        <input class="cli-search"
+               type="text"
+               placeholder="Buscar por placa, modelo ou cliente..."
+               @bind="busca"
+               @bind:event="oninput" />
+    </div>
+
+    @if (loading)
+    {
+        <div class="cli-empty">Carregando...</div>
+    }
+    else if (!VeiculosFiltrados.Any())
+    {
+        <div class="cli-empty">Nenhum veículo encontrado.</div>
+    }
+    else
+    {
+        <div class="cli-grid">
+            @foreach (var v in VeiculosFiltrados)
+            {
+                <div class="cli-card">
+                    @* Parte superior: Dados do Carro *@
+                    <div class="v-header" @onclick="() => AbrirVeiculo(v.IdVeiculo)">
+                        <div class="v-meta">
+                            <div class="v-modelo">@v.Fabricante @v.Modelo</div>
+                            <span class="v-placa-badge">@v.Placa</span>
+                            <div class="v-detalhes">@v.Ano • @v.Cor</div>
+                        </div>
+                        <div style="font-size: 20px; opacity: 0.5;">🚗</div>
+                    </div>
+
+                    @* Parte inferior: Link para o Dono *@
+                    <div class="v-cliente-link" @onclick="() => AbrirCliente(v.ClienteId)">
+                        <span class="v-cliente-avatar">👤</span>
+                        <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            @v.ClienteNome
+                        </div>
+                        <span style="opacity: 0.3; font-size: 10px;">➔</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
 
 @code {
     List<VeiculoDto>? veiculos;
+    bool loading = true;
+    string busca = "";
+
+    IEnumerable<VeiculoDto> VeiculosFiltrados =>
+        string.IsNullOrWhiteSpace(busca)
+            ? veiculos ?? Enumerable.Empty<VeiculoDto>()
+            : (veiculos ?? Enumerable.Empty<VeiculoDto>())
+                .Where(v =>
+                    (v.Modelo?.Contains(busca, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (v.Placa?.Contains(busca, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (v.ClienteNome?.Contains(busca, StringComparison.OrdinalIgnoreCase) ?? false));
 
     protected override async Task OnInitializedAsync()
     {
         veiculos = await Api.GetAll();
+        loading = false;
     }
 
     void Novo() => Nav.NavigateTo("/veiculos/novo");
-
-    void AbrirVeiculo(int id)
-        => Nav.NavigateTo($"/veiculos/detalhe/{id}");
-
-    void AbrirCliente(int id)
-        => Nav.NavigateTo($"/clientes/{id}");
+    void AbrirVeiculo(int id) => Nav.NavigateTo($"/veiculos/detalhe/{id}");
+    void AbrirCliente(int id) => Nav.NavigateTo($"/clientes/{id}");
 }

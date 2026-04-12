@@ -5,46 +5,166 @@
 @inject OrdemServicoApi Api
 @inject NavigationManager Nav
 
-<h3>Ordens de Serviço</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<button class="fab" @onclick="Novo">+</button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --danger: #f87171;
+        --success: #4ade80;
+        --warning: #fbbf24;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-@if (loading)
-{
-    <p>Carregando...</p>
-}
-else if (items.Count == 0)
-{
-    <p>Nenhuma OS encontrada</p>
-}
-else
-{
-    <div class="grid-app">
-        @foreach (var os in items)
-        {
-            <div class="os-card" @onclick="() => Abrir(os.IdOrdemServico)">
-                
-                <div class="os-header">
-                    <strong>#@os.IdOrdemServico</strong>
-                    <span class="status @os.Status?.ToLower()">@os.Status</span>
-                </div>
+    /* TOPBAR */
+    .cli-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+    .cli-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .cli-title span { color: var(--accent); }
+    
+    .cli-btn-novo {
+        background: var(--accent);
+        color: #0f0f11;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s;
+    }
 
-                <div class="os-body">
-                    <p><b>Cliente:</b> @os.NomeCliente</p>
-                    <p><b>Veículo:</b> @os.VeiculoModelo</p>
-                    <p><b>Descrição:</b> @os.Descricao</p>
-                    <p><b>Data:</b> @os.DataServico.ToString("dd/MM/yyyy")</p>
-                </div>
+    /* GRID */
+    .cli-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+    }
 
-                <div class="os-footer">
-                    <span>Total:</span>
-                    <strong>R$ @CalcularTotal(os)</strong>
-                </div>
+    .cli-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        cursor: pointer;
+        transition: transform 0.2s, border-color 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .cli-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
 
-            </div>
-        }
+    /* OS HEADER */
+    .os-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .os-id { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--accent); }
+    
+    /* STATUS BADGES */
+    .status-badge {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+    .status-aberta { background: rgba(251,191,36,0.1); color: var(--warning); border: 1px solid rgba(251,191,36,0.2); }
+    .status-concluida { background: rgba(74,222,128,0.1); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .status-cancelada { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+
+    /* OS BODY */
+    .os-info { flex: 1; }
+    .os-cliente { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+    .os-veiculo { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .os-desc { 
+        font-size: 13px; 
+        color: #ccc; 
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.5;
+        background: var(--surface2);
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    /* OS FOOTER */
+    .os-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
+        margin-top: 4px;
+    }
+    .os-data { font-size: 12px; color: var(--muted); }
+    .os-total { font-family: 'Space Mono', monospace; font-size: 16px; color: var(--text); font-weight: 700; }
+
+    .loading-box { text-align: center; color: var(--muted); padding: 60px 0; }
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">Ordens de Serviço<span>.</span></div>
+        <button class="cli-btn-novo" @onclick="Novo">+ Nova OS</button>
     </div>
-}
+
+    @if (loading)
+    {
+        <div class="loading-box">Carregando ordens...</div>
+    }
+    else if (!items.Any())
+    {
+        <div class="loading-box">Nenhuma OS registrada até o momento.</div>
+    }
+    else
+    {
+        <div class="cli-grid">
+            @foreach (var os in items)
+            {
+                <div class="cli-card" @onclick="() => Abrir(os.IdOrdemServico)">
+                    
+                    <div class="os-header">
+                        <div class="os-id">#@os.IdOrdemServico</div>
+                        <span class="status-badge status-@os.Status?.ToLower().Replace(" ", "-")">
+                            @os.Status
+                        </span>
+                    </div>
+
+                    <div class="os-info">
+                        <div class="os-cliente">@os.NomeCliente</div>
+                        <div class="os-veiculo">🚗 @os.VeiculoModelo</div>
+                        <div class="os-desc">@os.Descricao</div>
+                    </div>
+
+                    <div class="os-footer">
+                        <div class="os-data">🗓️ @os.DataServico.ToString("dd/MM/yyyy")</div>
+                        <div class="os-total">R$ @CalcularTotal(os).ToString("N2")</div>
+                    </div>
+
+                </div>
+            }
+        </div>
+    }
+</div>
 
 @code {
     List<OrdemServicoDto> items = new();
@@ -55,16 +175,14 @@ else
         items = await Api.GetAll();
         loading = false;
     }
+
     void Novo() => Nav.NavigateTo("/os/nova");
 
-    void Abrir(int id)
-    {
-        Nav.NavigateTo($"/os/{id}");
-    }
+    void Abrir(int id) => Nav.NavigateTo($"/os/{id}");
 
     decimal CalcularTotal(OrdemServicoDto os)
     {
-        var totalPecas = os.Pecas.Sum(p => p.PrecoUnitario * p.Quantidade);
+        var totalPecas = os.PecasAssociadas?.Sum(p => p.PrecoUnitario * p.Quantidade) ?? 0;
         return os.MaoDeObra + totalPecas - os.ValorDesconto;
     }
 }

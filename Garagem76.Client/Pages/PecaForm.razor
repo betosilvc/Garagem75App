@@ -8,57 +8,170 @@
 @inject PecaApi Api
 @inject NavigationManager Nav
 
-<h3>@(id == null ? "Nova Peça" : "Editar Peça")</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<EditForm Model="peca" OnValidSubmit="Salvar">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="form-group">
-        <label>Código</label>
-        <InputNumber class="form-control" @bind-Value="peca.CodPeca" />
-    </div>
-
-    <div class="form-group">
-        <label>Nome</label>
-        <InputText class="form-control" @bind-Value="peca.Nome" />
-    </div>
-
-    <div class="form-group">
-        <label>Marca</label>
-        <InputText class="form-control" @bind-Value="peca.Marca" />
-    </div>
-
-    <div class="form-group">
-        <label>Fornecedor</label>
-        <InputText class="form-control" @bind-Value="peca.Fornecedor" />
-    </div>
-
-    <div class="form-group">
-        <label>Preço</label>
-        <InputNumber class="form-control" @bind-Value="peca.Preco" />
-    </div>
-
-    <div class="form-group">
-        <label>Estoque</label>
-        <InputNumber class="form-control" @bind-Value="peca.QuantidadeEstoque" />
-    </div>
-    <!-- 📸 UPLOAD + PREVIEW -->
-    <InputFile OnChange="PreviewImagem" accept="image/*" capture="environment" />
-
-    @if (!string.IsNullOrEmpty(preview))
-    {
-        <img src="@preview" class="img-preview" />
-
-        <button class="btn btn-primary mt-2" @onclick="UploadImagem">
-            Salvar Imagem
-        </button>
+    .cli-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #e8ff47;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
     }
 
+    .cli-topbar { margin-bottom: 28px; }
+    .cli-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .cli-title span { color: var(--accent); }
 
-    <button class="btn btn-success mt-3">Salvar</button>
-    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Cancelar</button>
-</EditForm>
+    .form-container {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+    .cli-input {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .cli-input:focus { border-color: var(--accent); }
+
+    /* UPLOAD BOX */
+    .upload-box {
+        background: var(--surface2);
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        margin-top: 10px;
+    }
+    .img-preview {
+        width: 100%;
+        max-width: 200px;
+        height: auto;
+        border-radius: 10px;
+        margin: 15px auto;
+        display: block;
+        border: 1px solid var(--accent);
+    }
+
+    .custom-file-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        background: rgba(232, 255, 71, 0.1);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* ACTIONS */
+    .form-actions { margin-top: 32px; display: flex; gap: 12px; }
+    .btn-save { background: var(--accent); color: #0f0f11; border: none; border-radius: 10px; padding: 12px 24px; font-weight: 600; flex: 2; cursor: pointer; }
+    .btn-cancel { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 12px 24px; flex: 1; cursor: pointer; }
+    .btn-upload { background: #333; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-top: 10px;}
+
+    @@media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
+</style>
+
+<div class="cli-shell">
+    <div class="cli-topbar">
+        <div class="cli-title">
+            @(id == null ? "Nova Peça" : "Editar Peça")<span>.</span>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <EditForm Model="peca" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Código da Peça</label>
+                    <InputNumber class="cli-input" @bind-Value="peca.CodPeca" />
+                </div>
+
+                <div class="input-group">
+                    <label>Nome do Produto</label>
+                    <InputText class="cli-input" @bind-Value="peca.Nome" placeholder="Ex: Pastilha de Freio" />
+                </div>
+
+                <div class="input-group">
+                    <label>Marca</label>
+                    <InputText class="cli-input" @bind-Value="peca.Marca" placeholder="Ex: Brembo" />
+                </div>
+
+                <div class="input-group">
+                    <label>Fornecedor</label>
+                    <InputText class="cli-input" @bind-Value="peca.Fornecedor" />
+                </div>
+
+                <div class="input-group">
+                    <label>Preço (R$)</label>
+                    <InputNumber class="cli-input" @bind-Value="peca.Preco" />
+                </div>
+
+                <div class="input-group">
+                    <label>Quantidade em Estoque</label>
+                    <InputNumber class="cli-input" @bind-Value="peca.QuantidadeEstoque" />
+                </div>
+
+                <div class="input-group full-width">
+                    <label>Imagem do Produto</label>
+                    <div class="upload-box">
+                        <label class="custom-file-btn">
+                            📷 Selecionar Foto
+                            <InputFile OnChange="PreviewImagem" accept="image/*" capture="environment" style="display:none;" />
+                        </label>
+
+                        @if (!string.IsNullOrEmpty(preview))
+                        {
+                            <img src="@preview" class="img-preview" />
+                            <button type="button" class="btn-upload" @onclick="UploadImagem">
+                                ☁️ Fazer Upload da Imagem
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-save">Salvar Peça</button>
+                <button type="button" class="btn-cancel" @onclick="Voltar">Cancelar</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
 
 @code {
     [Parameter] public int? id { get; set; }
@@ -75,15 +188,36 @@
         }
     }
 
-    async Task Salvar()
+  async Task Salvar()
+{
+    if (id == null)
     {
-        if (id == null)
-            await Api.Create(peca);
-        else
-            await Api.Update(peca.IdPeca, peca);
-
-        Nav.NavigateTo("/pecas");
+        // 1. Salva a peça (sem capturar retorno)
+        await Api.Create(peca);
+        
+        // 2. Busca todas as peças e pega a última (pelo maior ID)
+        // Isso é um truque para descobrir o ID que o banco gerou agora
+        var todas = await Api.GetAll();
+        var ultimaPeca = todas.OrderByDescending(p => p.IdPeca).FirstOrDefault();
+        
+        if (ultimaPeca != null)
+        {
+            peca.IdPeca = ultimaPeca.IdPeca;
+        }
     }
+    else
+    {
+        await Api.Update(peca.IdPeca, peca);
+    }
+
+    // 3. Agora que temos o ID (seja do Update ou da busca acima), faz o upload
+    if (arquivo != null && peca.IdPeca > 0)
+    {
+        await UploadImagem();
+    }
+
+    Nav.NavigateTo("/pecas");
+}
 
     void Voltar() => Nav.NavigateTo("/pecas");
     string? preview;

@@ -1,30 +1,312 @@
 ﻿@page "/dashboard"
+@using Garagem75.Shared.Dtos
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 
 @inject DashboardApi Api
 @inject IJSRuntime JS
 
-<h3>Dashboard</h3>
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
 
-<div class="dashboard">
+    .dash-shell {
+        --bg: #0f0f11;
+        --surface: #18181c;
+        --surface2: #222228;
+        --border: rgba(255,255,255,0.07);
+        --accent: #ffd700;
+        --accent2: #ff6b35;
+        --text: #f0f0f0;
+        --muted: #888888;
+        --radius: 14px;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 24px;
+    }
 
-    <!-- 💰 FATURAMENTO -->
-    <div class="card destaque">
-        <h4>Faturamento Hoje</h4>
-        <h2>R$ @faturamento</h2>
+    /* TOPBAR */
+    .dash-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+    .dash-logo { display: flex; align-items: center; gap: 10px; }
+    .dash-logo-icon {
+        width: 32px; height: 32px;
+        background: var(--accent);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px;
+    }
+    .dash-logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+    .dash-logo-text span { color: var(--accent); }
+    .dash-date-pill {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* KPI */
+    .dash-kpi-row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .dash-kpi-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .dash-kpi-card:hover { border-color: rgba(255,255,255,0.14); }
+    .dash-kpi-card.destaque { background: var(--accent); border-color: transparent; }
+    .dash-kpi-card.destaque .dash-kpi-label,
+    .dash-kpi-card.destaque .dash-kpi-val,
+    .dash-kpi-card.destaque .dash-kpi-sub { color: #0f0f11; }
+    .dash-kpi-label {
+        font-size: 11px; font-weight: 500; color: var(--muted);
+        letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .dash-kpi-val {
+        font-family: 'Space Mono', monospace;
+        font-size: 22px; font-weight: 700;
+        color: var(--text); letter-spacing: -1px;
+        line-height: 1; margin-bottom: 6px;
+    }
+    .dash-kpi-sub { font-size: 11px; color: var(--muted); }
+    .dash-kpi-bg {
+        position: absolute; right: -4px; bottom: -8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 52px; font-weight: 700;
+        opacity: 0.07; color: #000; line-height: 1;
+        pointer-events: none; user-select: none;
+    }
+
+    /* CHARTS */
+    .dash-charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .dash-chart-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+    }
+    .dash-chart-title {
+        font-size: 12px; font-weight: 500; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.6px;
+        margin-bottom: 16px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .dash-chart-badge {
+        background: var(--surface2); border-radius: 4px;
+        padding: 2px 8px; font-size: 10px;
+        color: var(--muted); text-transform: none; letter-spacing: 0;
+    }
+    .dash-canvas-wrap { position: relative; height: 160px; }
+
+    /* BOTTOM */
+    .dash-bottom-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+    .dash-table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+    }
+    .dash-table-card table { width: 100%; border-collapse: collapse; }
+    .dash-table-card th {
+        font-size: 10px; color: var(--muted); font-weight: 500;
+        text-transform: uppercase; letter-spacing: 0.5px;
+        padding: 0 0 10px; text-align: left;
+    }
+    .dash-table-card td {
+        font-size: 12px; color: var(--text);
+        padding: 8px 0;
+        border-top: 1px solid var(--border);
+        white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis; max-width: 120px;
+    }
+    .dash-pill {
+        display: inline-block; padding: 2px 8px;
+        border-radius: 4px; font-size: 10px; font-weight: 500;
+        background: rgba(79,156,249,0.12); color: #4f9cf9;
+    }
+
+    @@media (max-width: 1100px) {
+        .dash-kpi-row { grid-template-columns: 1fr 1fr 1fr; }
+        .dash-bottom-row { grid-template-columns: 1fr 1fr; }
+    }
+    @@media (max-width: 720px) {
+        .dash-kpi-row { grid-template-columns: 1fr 1fr; }
+        .dash-charts-row { grid-template-columns: 1fr; }
+        .dash-bottom-row { grid-template-columns: 1fr; }
+    }
+    @@media (max-width: 480px) {
+        .dash-kpi-row { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="dash-shell">
+
+    <!-- TOPBAR -->
+    <div class="dash-topbar">
+        <div class="dash-logo">
+            <div class="dash-logo-icon">🔧</div>
+            <div class="dash-logo-text">Garagem<span>75</span></div>
+        </div>
+        <div class="dash-date-pill">@DateTime.Now.ToString("ddd, dd MMM yyyy")</div>
     </div>
 
-    <!-- 🚗 FABRICANTES -->
-    <div class="card">
-        <h4>Fabricantes</h4>
-        <canvas id="chartFabricantes"></canvas>
+    <!-- KPIs -->
+    <div class="dash-kpi-row">
+
+        <div class="dash-kpi-card destaque">
+            <div class="dash-kpi-label">Faturamento hoje</div>
+            <div class="dash-kpi-val">R$ @faturamento.ToString("N2")</div>
+            <div class="dash-kpi-sub">atualizado agora</div>
+            <div class="dash-kpi-bg">$</div>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-label">Faturamento semana</div>
+            <div class="dash-kpi-val">R$ @dto?.ValorTotalOrdensServico.ToString("N0")</div>
+            <div class="dash-kpi-sub">últimos 7 dias</div>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-label">Ordens de serviço</div>
+            <div class="dash-kpi-val">@dto?.TotalOrdensServico</div>
+            <div class="dash-kpi-sub">no total</div>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-label">Clientes</div>
+            <div class="dash-kpi-val">@dto?.TotalClientes</div>
+            <div class="dash-kpi-sub">cadastrados</div>
+        </div>
+
+        <div class="dash-kpi-card">
+            <div class="dash-kpi-label">Peças</div>
+            <div class="dash-kpi-val">@dto?.TotalPecas</div>
+            <div class="dash-kpi-sub">no estoque</div>
+        </div>
+
     </div>
 
-    <!-- 🔧 PEÇAS -->
-    <div class="card">
-        <h4>Marcas de Peças</h4>
-        <canvas id="chartPecas"></canvas>
+    <!-- GRÁFICOS -->
+    <div class="dash-charts-row">
+        <div class="dash-chart-card">
+            <div class="dash-chart-title">
+                Fabricantes
+                <span class="dash-chart-badge">Top 5</span>
+            </div>
+            <div class="dash-canvas-wrap">
+                <canvas id="chartFabricantes"></canvas>
+            </div>
+        </div>
+        <div class="dash-chart-card">
+            <div class="dash-chart-title">
+                Marcas de Peças
+                <span class="dash-chart-badge">Top 5</span>
+            </div>
+            <div class="dash-canvas-wrap">
+                <canvas id="chartPecas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTAS -->
+    <div class="dash-bottom-row">
+
+        <!-- Últimos veículos atendidos -->
+        <div class="dash-table-card">
+            <div class="dash-chart-title">Últimos veículos</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fabricante</th>
+                        <th>Modelo</th>
+                        <th>Placa</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in dto?.UltimosVeiculosAtendidos ?? new())
+                    {
+                        <tr>
+                            <td>@v.Fabricante</td>
+                            <td>@v.Modelo</td>
+                            <td><span class="dash-pill">@v.Placa</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Últimas peças -->
+        <div class="dash-table-card">
+            <div class="dash-chart-title">Últimas peças</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Marca</th>
+                        <th>Preço</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in dto?.UltimasPecas ?? new())
+                    {
+                        <tr>
+                            <td>@p.Nome</td>
+                            <td>@p.Marca</td>
+                            <td>R$ @p.Preco.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Peças por OS -->
+        <div class="dash-table-card">
+            <div class="dash-chart-title">Peças por OS</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modelo</th>
+                        <th>Qtd. peças</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var o in dto?.PecasPorVeiculo ?? new())
+                    {
+                        <tr>
+                            <td>@o.Modelo</td>
+                            <td><span class="dash-pill">@o.QuantidadePecas</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
 </div>
@@ -32,15 +314,18 @@
 @code {
 
     decimal faturamento;
+    DashboardDto? dto;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
+        // Os três endpoints reais do seu controller
         faturamento = await Api.GetFaturamentoDia();
+        dto         = await Api.GetDashboard();
 
         var fabricantes = await Api.GetFabricantes();
-        var pecas = await Api.GetMarcasPecas();
+        var pecas       = await Api.GetMarcasPecas();
 
         await JS.InvokeVoidAsync("garagemCharts.criarBarChart",
             "chartFabricantes",
