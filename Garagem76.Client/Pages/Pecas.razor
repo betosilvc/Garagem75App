@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @inject PecaApi Api
 @inject NavigationManager Nav
+@inject HttpClient Http
 
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
@@ -175,27 +176,28 @@
     else
     {
         <div class="cli-grid">
-            @foreach (var p in pecasFiltradas)
-            {
-                <div class="cli-card" @onclick="() => Detalhe(p.IdPeca)">
-                    <div class="img-box">
-                        <img src="@(string.IsNullOrEmpty(p.Imagem) ? "img/sem-imagem.png" : p.Imagem)" />
-                    </div>
+    @foreach (var p in pecasFiltradas)
+    {
+        <div class="cli-card" @onclick="() => Detalhe(p.IdPeca)">
+            <div class="img-box">
+                <img src="@CorrigirUrl(p.Imagem)"               
+                alt="@p.Nome" />
+            </div>
 
-                    <div class="card-content">
-                        <div class="p-nome">@p.Nome</div>
-                        <div class="p-marca">@p.Marca</div>
+            <div class="card-content">
+                <div class="p-nome">@p.Nome</div>
+                <div class="p-marca">@p.Marca</div>
 
-                        <div class="p-footer">
-                            <div class="p-preco">R$ @p.Preco.ToString("N2")</div>
-                            <span class="badge-estoque @(p.QuantidadeEstoque < 5 ? "estoque-baixo" : "estoque-ok")">
-                                @p.QuantidadeEstoque UN
-                            </span>
-                        </div>
-                    </div>
+                <div class="p-footer">
+                    <div class="p-preco">R$ @p.Preco.ToString("N2")</div>
+                    <span class="badge-estoque @(p.QuantidadeEstoque < 5 ? "estoque-baixo" : "estoque-ok")">
+                        @p.QuantidadeEstoque UN
+                    </span>
                 </div>
-            }
+            </div>
         </div>
+    }
+</div>
     }
 </div>
 
@@ -204,6 +206,25 @@
     string busca = "";
     decimal precoMin = 0;
     decimal precoMax = 10000;
+
+    private string CorrigirUrl(string urlOriginal)
+    {
+        if (string.IsNullOrEmpty(urlOriginal)) return "img/sem-foto.png";
+
+        // Forçamos a troca do localhost pelo domínio que o navegador está usando no momento
+        // Seja ele localhost ou o endereço do Dev Tunnel
+        if (urlOriginal.Contains("localhost"))
+        {
+            // O segredo: Pegamos a URL da API que o HttpClient já conhece
+            var apiBase = Http.BaseAddress?.ToString().TrimEnd('/');
+            
+            // Extraímos apenas o caminho do arquivo (ex: /uploads/pecas/foto.jpg)
+            var uri = new Uri(urlOriginal);
+            return $"{apiBase}{uri.PathAndQuery}";
+        }
+
+        return urlOriginal;
+    }
 
     protected override async Task OnInitializedAsync()
     {

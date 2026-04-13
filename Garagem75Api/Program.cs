@@ -1,6 +1,7 @@
 using AutoMapper;
 using Garagem75.Api.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -109,7 +110,12 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
-
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = int.MaxValue; // Permite arquivos grandes
+    options.MemoryBufferThreshold = int.MaxValue;
+});
 // --- FIM DO TRECHO DE AUTENTICAÇÃO ---
 
 builder.Services.AddAuthorization();
@@ -130,8 +136,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
-
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+        ctx.Context.Response.Headers.Append("X-Tunnel-Skip-Anti-Phishing-Page", "true");
+    }
+});
 // 🔥 A ORDEM EXATA É ESSA:
 app.UseRouting(); // 1. Roteamento
 

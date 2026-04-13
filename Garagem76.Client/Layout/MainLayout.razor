@@ -193,56 +193,65 @@
 
     <!-- BOTTOM NAV -->
     
-        
-    <nav class="ml-nav">
+    @* Só mostra o menu se NÃO estiver na página de login *@
+    @if (!IsLoginPage)
+    {
+        <nav class="ml-nav">
 
-        <a href="/" class="ml-nav-item @(IsActive("/dashboard") || Nav.Uri.TrimEnd('/').EndsWith(Nav.BaseUri.TrimEnd('/')) ? "active" : "")">
-            <div class="ml-nav-dot"></div>
-            <span class="ml-nav-icon">📊</span>
-            <span class="ml-nav-label">Dashboard</span>
-        </a>
-
-        <a href="/clientes" class="ml-nav-item @(IsActive("/clientes") ? "active" : "")">
-            <div class="ml-nav-dot"></div>
-            <span class="ml-nav-icon">👤</span>
-            <span class="ml-nav-label">Clientes</span>
-        </a>
-
-        <a href="/veiculos" class="ml-nav-item @(IsActive("/veiculos") ? "active" : "")">
-            <div class="ml-nav-dot"></div>
-            <span class="ml-nav-icon">🚗</span>
-            <span class="ml-nav-label">Veículos</span>
-        </a>
-
-        <AuthorizeView Roles="Administrador,Mecanico">
-            <a href="/os" class="ml-nav-item @(IsActive("/os") ? "active" : "")">
+            <a href="/" class="ml-nav-item @(IsActive("/dashboard") || Nav.Uri.TrimEnd('/').EndsWith(Nav.BaseUri.TrimEnd('/')) ? "active" : "")">
                 <div class="ml-nav-dot"></div>
-                <span class="ml-nav-icon">🛠️</span>
-                <span class="ml-nav-label">OS</span>
+                <span class="ml-nav-icon">📊</span>
+                <span class="ml-nav-label">Dashboard</span>
             </a>
-        </AuthorizeView>
 
-        <AuthorizeView Roles="Administrador">
-            <a href="/pecas" class="ml-nav-item @(IsActive("/pecas") ? "active" : "")">
+            <a href="/clientes" class="ml-nav-item @(IsActive("/clientes") ? "active" : "")">
                 <div class="ml-nav-dot"></div>
-                <span class="ml-nav-icon">🔩</span>
-                <span class="ml-nav-label">Peças</span>
+                <span class="ml-nav-icon">👤</span>
+                <span class="ml-nav-label">Clientes</span>
             </a>
-            <a href="/usuarios" class="ml-nav-item @(IsActive("/usuarios") ? "active" : "")">
-                <div class="ml-nav-dot"></div>
-                <span class="ml-nav-icon">👥</span>
-                <span class="ml-nav-label">Usuários</span>
-            </a>
-            
-        </AuthorizeView>
 
-    </nav>
-    
-    
+            <a href="/veiculos" class="ml-nav-item @(IsActive("/veiculos") ? "active" : "")">
+                <div class="ml-nav-dot"></div>
+                <span class="ml-nav-icon">🚗</span>
+                <span class="ml-nav-label">Veículos</span>
+            </a>
+
+            <AuthorizeView Roles="Administrador,Mecanico">
+                <a href="/os" class="ml-nav-item @(IsActive("/os") ? "active" : "")">
+                    <div class="ml-nav-dot"></div>
+                    <span class="ml-nav-icon">🛠️</span>
+                    <span class="ml-nav-label">OS</span>
+                </a>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Administrador">
+                <a href="/pecas" class="ml-nav-item @(IsActive("/pecas") ? "active" : "")">
+                    <div class="ml-nav-dot"></div>
+                    <span class="ml-nav-icon">🔩</span>
+                    <span class="ml-nav-label">Peças</span>
+                </a>
+                <a href="/usuarios" class="ml-nav-item @(IsActive("/usuarios") ? "active" : "")">
+                    <div class="ml-nav-dot"></div>
+                    <span class="ml-nav-icon">👥</span>
+                    <span class="ml-nav-label">Usuários</span>
+                </a>
+
+            </AuthorizeView>
+
+        </nav>
+
+    }
 
 </div>
 
 @code {
+    private bool IsLoginPage => Nav.Uri.ToLower().EndsWith("/login") || Nav.Uri.ToLower().EndsWith("/");
+
+    protected override void OnInitialized()
+    {
+        // Garante que o layout atualize quando a rota mudar
+        Nav.LocationChanged += (s, e) => StateHasChanged();
+    }
 
     bool IsActive(string url)
         => Nav.Uri.Contains(url, StringComparison.OrdinalIgnoreCase);

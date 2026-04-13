@@ -23,11 +23,38 @@ namespace Garagem75.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PecaDto>>> GetAll()
         {
-            var lista = await _context.Pecas
-                .OrderBy(p => p.Nome) // 👈 melhora UX
+            var listaEntidade = await _context.Pecas
+                .OrderBy(p => p.Nome)
                 .ToListAsync();
 
-            return Ok(_mapper.Map<List<PecaDto>>(lista));
+            // 1. Primeiro mapeia para DTO
+            var listaDto = _mapper.Map<List<PecaDto>>(listaEntidade);
+
+            // 2. Obtém a base do túnel de forma dinâmica
+            // Se estiver no túnel, o Host será o endereço .devtunnels.ms
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
+            foreach (var dto in listaDto)
+            {
+                if (!string.IsNullOrEmpty(dto.Imagem))
+                {
+                    // Se a URL gravada no banco contiver localhost
+                    if (dto.Imagem.Contains("localhost"))
+                    {
+                        // Extraímos apenas o caminho do ficheiro (ex: /uploads/pecas/foto.jpg)
+                        // O Uri ajuda a separar a porta do caminho real
+                        var uri = new Uri(dto.Imagem);
+                        dto.Imagem = $"{baseUrl}{uri.PathAndQuery}";
+                    }
+                    // Se no banco estiver apenas "uploads/pecas/foto.jpg" (sem http)
+                    else if (!dto.Imagem.StartsWith("http"))
+                    {
+                        dto.Imagem = $"{baseUrl}/{dto.Imagem.TrimStart('/')}";
+                    }
+                }
+            }
+
+            return Ok(listaDto);
         }
 
         [HttpGet("buscar")]
@@ -123,6 +150,7 @@ namespace Garagem75.Api.Controllers
             // 🔥 nome único
             var nomeArquivo = $"{id}_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
             var caminhoCompleto = Path.Combine(pasta, nomeArquivo);
+            var caminhoRelativo = $"/uploads/pecas/{nomeArquivo}";
 
             // 💾 salva arquivo
             using (var stream = new FileStream(caminhoCompleto, FileMode.Create))
@@ -131,8 +159,7 @@ namespace Garagem75.Api.Controllers
             }
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var url = $"{baseUrl}/uploads/pecas/{nomeArquivo}";
-
+            var url = $"{baseUrl}{caminhoRelativo}";
             // 💾 salva no banco
             peca.Imagem = url;
             await _context.SaveChangesAsync();

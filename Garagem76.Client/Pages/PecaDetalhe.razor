@@ -6,6 +6,7 @@
 @inject IJSRuntime JS
 @inject PecaApi Api
 @inject NavigationManager Nav
+@inject HttpClient Http
 
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@@ DM Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
@@ -154,7 +155,7 @@
         else
         {
             <div class="p-img-frame">
-                <img src="@(string.IsNullOrEmpty(peca.Imagem) ? "img/sem-imagem.png" : peca.Imagem)" class="p-img-full" />
+                <img src="@CorrigirUrl(peca.Imagem)" class="p-img-full" alt="@peca.Nome" />
             </div>
 
             <div class="info-card">
@@ -232,5 +233,32 @@
     {
         await Api.Delete(id);
         Nav.NavigateTo("/pecas");
+    }
+
+    private string CorrigirUrl(string? urlOriginal)
+    {
+        // 1. Se estiver vazio, retorna a imagem padrão
+        if (string.IsNullOrEmpty(urlOriginal)) 
+            return "img/sem-imagem.png";
+
+        // 2. Se a URL contiver localhost, fazemos o "de-para" para o túnel
+        if (urlOriginal.Contains("localhost"))
+        {
+            var apiBase = Http.BaseAddress?.ToString().TrimEnd('/');
+            
+            try 
+            {
+                var uri = new Uri(urlOriginal);
+                // Monta a URL correta: Base da API + Caminho do arquivo (/uploads/...)
+                return $"{apiBase}{uri.PathAndQuery}";
+            }
+            catch 
+            {
+                return urlOriginal;
+            }
+        }
+
+        // 3. Se já for uma URL externa ou correta, retorna ela mesma
+        return urlOriginal;
     }
 }

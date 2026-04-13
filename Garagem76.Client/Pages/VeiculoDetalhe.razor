@@ -5,6 +5,7 @@
 
 @inject VeiculoApi Api
 @inject NavigationManager Nav
+@inject HttpClient Http
 
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@700&display=swap');
@@ -158,18 +159,19 @@
         else
         {
             <div class="foto-frame">
-                @if (!string.IsNullOrEmpty(veiculo?.FotoUrl))
-                {
-                    <img src="@($"{ApiBase}/{veiculo.FotoUrl}")" class="foto-img" />
-                }
-                else
-                {
-                    <div class="sem-foto">
-                        <span style="font-size: 40px;">📷</span>
-                        <span>Nenhuma foto cadastrada</span>
-                    </div>
-                }
-            </div>
+    @if (!string.IsNullOrEmpty(veiculo?.FotoUrl))
+    {
+        @* Chamamos a função CorrigirUrl para tratar o localhost *@
+        <img src="@CorrigirUrl(veiculo.FotoUrl)" class="foto-img" />
+    }
+    else
+    {
+        <div class="sem-foto">
+            <span style="font-size: 40px;">📷</span>
+            <span>Nenhuma foto cadastrada</span>
+        </div>
+    }
+</div>
 
             <div class="info-card">
                 <div class="v-header">
@@ -220,7 +222,7 @@
 </div>
 
 @code {
-    string ApiBase = "http://localhost:5244"; // Lembre de ajustar se mudar a porta da API
+    string ApiBase = "https://51z0gm2k-7244.brs.devtunnels.ms/"; // Lembre de ajustar se mudar a porta da API
     [Parameter] public int id { get; set; }
 
     VeiculoDto? veiculo;
@@ -232,35 +234,87 @@
 
     void Editar() => Nav.NavigateTo($"/veiculos/{id}");
 
-    string? preview;
-    IBrowserFile? arquivoSelecionado;
+    
 
-    async Task PreviewFoto(InputFileChangeEventArgs e)
+    private string? preview;
+    private IBrowserFile? arquivoSelecionado;
+
+    // 📸 Gera o preview para o usuário ver antes de salvar
+   private async Task PreviewFoto(InputFileChangeEventArgs e)
+{
+    arquivoSelecionado = e.File;
+
+    // Limite de 15MB
+    using var stream = arquivoSelecionado.OpenReadStream(32 * 1024 * 1024);
+    using var ms = new MemoryStream();
+    await stream.CopyToAsync(ms);
+
+    var base64 = Convert.ToBase64String(ms.ToArray());
+    
+    // Isso aqui é o que faz o @if ser verdadeiro
+    preview = $"data:{arquivoSelecionado.ContentType};base64,{base64}";
+
+    // OBRIGATÓRIO: Avisa o Blazor para mostrar o botão agora
+    StateHasChanged();
+}
+    // 💾 Envia para a API via Túnel
+    private async Task SalvarFoto()
+{
+    if (arquivoSelecionado == null || veiculo == null) return;
+
+    // Chamando o método que você já criou no seu Service
+    var novaUrl = await Api.UploadFoto(veiculo.IdVeiculo, arquivoSelecionado);
+
+    if (novaUrl != null)
     {
-        arquivoSelecionado = e.File;
-        var buffer = new byte[arquivoSelecionado.Size];
-        await arquivoSelecionado.OpenReadStream().ReadAsync(buffer);
-        preview = $"data:{arquivoSelecionado.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        // 1. Atualiza o objeto na tela com a nova URL
+        veiculo.FotoUrl = novaUrl;
+        
+        // 2. Limpa o preview para o botão sumir após salvar
+        preview = null;
+        arquivoSelecionado = null;
+        
+        // 3. Opcional: Recarrega os dados completos para garantir
+        veiculo = await Api.GetById(veiculo.IdVeiculo);
+        
+        StateHasChanged();
     }
-
-    async Task SalvarFoto()
+    else 
     {
-        try
+        // Se cair aqui, a foto pode ser grande demais ou o túnel falhou
+        Console.WriteLine("Falha no upload via Service.");
+    }
+}
+
+    private string CorrigirUrl(string? urlOriginal)
+    {
+        if (string.IsNullOrEmpty(urlOriginal)) return "";
+
+        // Se a URL já estiver salva com localhost, precisamos "limpar"
+        if (urlOriginal.Contains("localhost"))
         {
-            if (arquivoSelecionado == null) return;
-
-            var url = await Api.UploadFoto(id, arquivoSelecionado);
-
-            if (!string.IsNullOrEmpty(url))
+            // Pegamos o endereço base do túnel que o HttpClient já está usando
+            var apiBase = Http.BaseAddress?.ToString().TrimEnd('/');
+            
+            try 
             {
-                if (veiculo != null) veiculo.FotoUrl = url;
-                preview = null;
-                StateHasChanged();
+                var uri = new Uri(urlOriginal);
+                // Retorna a URL do Túnel + o caminho real da pasta (/uploads/...)
+                return $"{apiBase}{uri.PathAndQuery}";
+            }
+            catch 
+            {
+                return urlOriginal;
             }
         }
-        catch (Exception ex)
+        
+        // Se no banco estiver apenas o caminho relativo (ex: uploads/veiculos/foto.jpg)
+        if (!urlOriginal.StartsWith("http"))
         {
-            Console.WriteLine(ex.Message);
+            var apiBase = Http.BaseAddress?.ToString().TrimEnd('/');
+            return $"{apiBase}/{urlOriginal.TrimStart('/')}";
         }
+
+        return urlOriginal;
     }
 }

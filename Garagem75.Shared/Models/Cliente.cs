@@ -17,8 +17,9 @@ public class Cliente
     public string Nome { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório!")]
+    [StringLength(11, MinimumLength = 11, ErrorMessage = "O CPF deve ter exatamente 11 números.")]
+    [RegularExpression(@"^\d{11}$", ErrorMessage = "O CPF deve conter apenas números.")]
     [Display(Name = "CPF")]
-    [StringLength(11)]
     public string Cpf { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório!")]

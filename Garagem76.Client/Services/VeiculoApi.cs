@@ -29,23 +29,41 @@ public class VeiculoApi
 
     public async Task<string?> UploadFoto(int id, IBrowserFile file)
     {
-        var content = new MultipartFormDataContent();
+        try
+        {
+            var content = new MultipartFormDataContent();
 
-        var stream = file.OpenReadStream(5 * 1024 * 1024); // 5MB
-        var fileContent = new StreamContent(stream);
+            // 1. Aumente o limite para suportar câmeras de alta resolução
+            long maxFileSize = 1024 * 1024 * 15; // 15MB
 
-        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            // 2. Leia o stream para um buffer (ajuda na estabilidade do upload via celular)
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(maxFileSize).ReadAsync(buffer);
 
-        content.Add(fileContent, "file", file.Name);
+            var fileContent = new ByteArrayContent(buffer);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
 
-        var response = await _http.PostAsync($"api/veiculo/{id}/upload", content);
+            content.Add(fileContent, "file", file.Name);
 
-        if (!response.IsSuccessStatusCode)
+            // 3. Verifique se a URL absoluta da API está correta aqui
+            var response = await _http.PostAsync($"api/veiculo/{id}/upload", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // Opcional: Logar o erro para saber se é 413 (Payload too large) ou 404
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Erro no upload: {response.StatusCode} - {errorContent}");
+                return null;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<UploadResult>();
+            return result?.fotoUrl;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exceção no upload: {ex.Message}");
             return null;
-
-        var result = await response.Content.ReadFromJsonAsync<UploadResult>();
-
-        return result?.fotoUrl;
+        }
     }
 
     public async Task<List<VeiculoDto>> GetByCliente(int clienteId)

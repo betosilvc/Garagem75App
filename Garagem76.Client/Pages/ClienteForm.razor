@@ -1,6 +1,6 @@
 ﻿@page "/clientes/novo"
 @page "/clientes/{id:int}"
-@attribute [Authorize(Roles = "Administrador,Mecanico")]
+@attribute [Authorize(Roles = "Administrador,Mecânico")]
 @inject HttpClient Http
 @using Garagem75.Shared.Models
 @using Microsoft.AspNetCore.Authorization
@@ -218,12 +218,20 @@
                     <ValidationMessage For="@(() => cliente.Nome)" />
                 </div>
 
-                <div class="cf-field">
-                    <label class="cf-label">CPF</label>
-                    <InputText class="cf-input" @bind-Value="cliente.Cpf"
-                               @oninput="FormatarCpf" placeholder="000.000.000-00" />
-                    <ValidationMessage For="@(() => cliente.Cpf)" />
-                </div>
+            <div class="cf-field">
+                <label class="cf-label">CPF (Apenas números)</label>
+            <input type="text" 
+       class="cf-input" 
+       maxlength="11" 
+       inputmode="numeric"
+       @bind="cliente.Cpf" 
+       @bind:event="oninput"
+       @onkeypress="ApenasNumeros"
+       placeholder="00000000000" />
+    
+                @* A mensagem de validação continua funcionando se o modelo tiver o [Required] *@
+                <ValidationMessage For="@(() => cliente.Cpf)" />
+            </div>
 
                 <div class="cf-field">
                     <label class="cf-label">Telefone</label>
@@ -350,6 +358,36 @@
         if (valor.Length > 11) valor = valor[..11];
         cliente.Cpf = valor;
     }
+
+   
+   
+
+    private void ApenasNumeros(KeyboardEventArgs e)
+    {
+        // Lista de teclas permitidas além dos números (opcional)
+        // Se quiser permitir apenas números:
+        if (!char.IsDigit(e.Key[0]))
+        {
+            // Nota: No Blazor, o onkeypress não tem o 'preventDefault' nativo tão fácil
+            // Então vamos reforçar na limpeza do valor
+            TratarEntrada();
+        }
+    }
+
+    private void TratarEntrada()
+    {
+        if (string.IsNullOrEmpty(cliente.Cpf)) return;
+
+        // Filtra e mantém apenas números
+        var somenteNumeros = new string(cliente.Cpf.Where(char.IsDigit).ToArray());
+
+        if (cliente.Cpf != somenteNumeros)
+        {
+            cliente.Cpf = somenteNumeros;
+        }
+    }
+
+
 
     void ValidarCampo(object? sender, FieldChangedEventArgs e) { }
 
