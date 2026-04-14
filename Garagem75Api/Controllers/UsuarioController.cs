@@ -32,8 +32,7 @@ namespace Garagem75.Api.Controllers
         public async Task<ActionResult<IEnumerable<UsuarioDto>>> GetAll()
         {
             var lista = await _context.Usuarios
-                //.Include(u => u.TipoUsuario)
-                //.Where(u => u.Ativo) // 🔥 IMPORTANTE
+                .Include(u => u.TipoUsuario)
                 .ToListAsync();
             Console.WriteLine($"TOTAL DE USUARIOS NO BANCO: {lista.Count}");
 
@@ -59,6 +58,12 @@ namespace Garagem75.Api.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(UsuarioDto dto)
         {
+            // ✅ Verifica e-mail duplicado
+            bool emailExiste = await _context.Usuarios
+                .AnyAsync(u => u.Email == dto.Email);
+
+            if (emailExiste)
+                return BadRequest(new { mensagem = "E-mail já cadastrado." });
             var entity = _mapper.Map<Usuario>(dto);
 
             _context.Usuarios.Add(entity);
@@ -74,6 +79,7 @@ namespace Garagem75.Api.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UsuarioDto dto)
         {
+
             if (id != dto.IdUsuario)
                 return BadRequest();
 
@@ -81,6 +87,12 @@ namespace Garagem75.Api.Controllers
 
             if (entity == null)
                 return NotFound();
+            // ✅ Verifica e-mail duplicado, ignorando o próprio usuário
+            bool emailExiste = await _context.Usuarios
+                .AnyAsync(u => u.Email == dto.Email && u.IdUsuario != id);
+
+            if (emailExiste)
+                return BadRequest(new { mensagem = "E-mail já cadastrado." });
 
             _mapper.Map(dto, entity);
 
@@ -122,6 +134,7 @@ namespace Garagem75.Api.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult> Login([FromBody] LoginDto login)
         {
 

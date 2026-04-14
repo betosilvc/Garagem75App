@@ -48,18 +48,17 @@ namespace Garagem76.Client.Services
             return await _http.GetFromJsonAsync<UsuarioDto>($"api/usuario/{id}");
         }
 
-        public async Task Create(UsuarioDto dto)
+        public async Task<HttpResponseMessage> Create(UsuarioDto usuario)
         {
             await AddToken();
-            var response = await _http.PostAsJsonAsync("api/usuario", dto);
-            response.EnsureSuccessStatusCode();
+            return await _http.PostAsJsonAsync("api/usuario", usuario);
+            // 👆 removeu o EnsureSuccessStatusCode — agora quem trata é o Blazor
         }
 
-        public async Task Update(int id, UsuarioDto dto)
+        public async Task<HttpResponseMessage> Update(int id, UsuarioDto usuario)
         {
             await AddToken();
-            var response = await _http.PutAsJsonAsync($"api/usuario/{id}", dto);
-            response.EnsureSuccessStatusCode();
+            return await _http.PutAsJsonAsync($"api/usuario/{id}", usuario);
         }
 
         public async Task Delete(int id)

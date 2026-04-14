@@ -165,8 +165,15 @@
                     </div>
                 </div>
             </div>
-
+            @if (!string.IsNullOrEmpty(mensagemErro))
+{
+    <div style="background:#2a1a1a; border:1px solid #f87171; border-radius:10px;
+                padding:12px 18px; color:#f87171; font-size:13px; margin-bottom:16px;">
+        ⚠️ @mensagemErro
+    </div>
+}
             <div class="form-actions">
+
                 <button type="submit" class="btn-save">
                     @(id.HasValue ? "Salvar Alterações" : "Criar Acesso")
                 </button>
@@ -195,15 +202,32 @@
         }
     }
  
-    async Task Salvar()
+    string mensagemErro = null;
+
+async Task Salvar()
+{
+    if (usuario.TipoUsuarioId == 0) return;
+
+    mensagemErro = null;
+    HttpResponseMessage response;
+
+    if (id.HasValue)
+        response = await Api.Update(id.Value, usuario);
+    else
+        response = await Api.Create(usuario);
+
+    if (!response.IsSuccessStatusCode)
     {
-        if (usuario.TipoUsuarioId == 0) return;
- 
-        if (id.HasValue)
-            await Api.Update(id.Value, usuario);
-        else
-            await Api.Create(usuario);
- 
-        Nav.NavigateTo("/usuarios");
+        var erro = await response.Content.ReadFromJsonAsync<ErroDto>();
+        mensagemErro = erro?.Mensagem ?? "Erro ao salvar.";
+        return;
     }
+
+    Nav.NavigateTo("/usuarios");
+}
+
+public class ErroDto
+{
+    public string Mensagem { get; set; }
+}
 }

@@ -43,6 +43,19 @@ namespace Garagem75.Api.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(ClienteDto dto)
         {
+            // ✅ Verifica CPF duplicado
+            bool cpfExiste = await _context.Clientes
+                .AnyAsync(c => c.Cpf == dto.Cpf);
+
+            if (cpfExiste)
+                return BadRequest(new { mensagem = "CPF já cadastrado." });
+
+            // ✅ Verifica Email duplicado
+            bool emailExiste = await _context.Clientes
+                .AnyAsync(c => c.Email == dto.Email);
+
+            if (emailExiste)
+                return BadRequest(new { mensagem = "E-mail já cadastrado." });
             var entity = _mapper.Map<Cliente>(dto);
 
             // 👇 GARANTE RELACIONAMENTO
@@ -72,6 +85,20 @@ namespace Garagem75.Api.Controllers
 
             if (entity == null)
                 return NotFound();
+
+            // ✅ Verifica CPF duplicado, ignorando o próprio cliente
+            bool cpfExiste = await _context.Clientes
+                .AnyAsync(c => c.Cpf == dto.Cpf && c.IdCliente != id);
+
+            if (cpfExiste)
+                return BadRequest(new { mensagem = "CPF já cadastrado." });
+
+            // ✅ Verifica Email duplicado, ignorando o próprio cliente
+            bool emailExiste = await _context.Clientes
+                .AnyAsync(c => c.Email == dto.Email && c.IdCliente != id);
+
+            if (emailExiste)
+                return BadRequest(new { mensagem = "E-mail já cadastrado." });
 
             _mapper.Map(dto, entity);
 

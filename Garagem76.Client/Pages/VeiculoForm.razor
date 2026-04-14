@@ -186,6 +186,13 @@
                     </InputSelect>
                 </div>
             </div>
+            @if (!string.IsNullOrEmpty(mensagemErro))
+{
+    <div style="background:#2a1a1a; border:1px solid #f87171; border-radius:10px;
+                padding:12px 18px; color:#f87171; font-size:13px; margin-bottom:16px;">
+        ⚠️ @mensagemErro
+    </div>
+}
 
             <div class="cf-actions">
                 <button type="submit" class="cf-btn-salvar">Salvar Alterações</button>
@@ -213,15 +220,32 @@
         }
     }
 
-    async Task Salvar()
-    {
-        if (id == 0)
-            await Api.Create(veiculo);
-        else
-            await Api.Update(id, veiculo);
+    string mensagemErro = null;
 
-        Nav.NavigateTo("/veiculos");
+async Task Salvar()
+{
+    mensagemErro = null;
+    HttpResponseMessage response;
+
+    if (id == null)
+        response = await Api.Create(veiculo);
+    else
+        response = await Api.Update(id, veiculo);
+
+    if (!response.IsSuccessStatusCode)
+    {
+        var erro = await response.Content.ReadFromJsonAsync<ErroDto>();
+        mensagemErro = erro?.Mensagem ?? "Erro ao salvar.";
+        return;
     }
+
+    Nav.NavigateTo("/veiculos");
+}
+
+public class ErroDto
+{
+    public string Mensagem { get; set; }
+}
 
     void Voltar() => Nav.NavigateTo("/veiculos");
 }

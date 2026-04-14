@@ -63,6 +63,12 @@ namespace Garagem75.Api.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(VeiculoDto dto)
         {
+            // ✅ Verifica placa duplicada
+            bool placaExiste = await _context.Veiculos
+                .AnyAsync(v => v.Placa == dto.Placa);
+
+            if (placaExiste)
+                return BadRequest(new { mensagem = "Placa já cadastrada." });
             var veiculo = _mapper.Map<Veiculo>(dto);
 
             _context.Veiculos.Add(veiculo);
@@ -119,6 +125,12 @@ namespace Garagem75.Api.Controllers
 
             if (veiculo == null)
                 return NotFound();
+            // ✅ Verifica placa duplicada, ignorando o próprio veículo
+            bool placaExiste = await _context.Veiculos
+                .AnyAsync(v => v.Placa == dto.Placa && v.IdVeiculo != id);
+
+            if (placaExiste)
+                return BadRequest(new { mensagem = "Placa já cadastrada." });
 
             // Atualiza campos
             _mapper.Map(dto, veiculo);

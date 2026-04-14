@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace Garagem75.Shared.Models;
 
 [Table("Usuario")]
+[Index(nameof(Email), IsUnique = true)]
+
 public class Usuario
 {
     [Key]

@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace Garagem75.Shared.Models;
 
 [Table("Peca")]
+[Index(nameof(CodPeca), IsUnique = true)]
+
 public class Peca
 {
     [Key]

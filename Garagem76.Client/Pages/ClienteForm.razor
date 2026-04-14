@@ -274,6 +274,10 @@
                     <label class="cf-label">Número</label>
                     <InputNumber class="cf-input" @bind-Value="enderecoAtual.Numero" />
                 </div>
+                <div class="cf-field">
+                    <label class="cf-label">Complemento</label>
+                    <InputText class="cf-input" @bind-Value="enderecoAtual.Complemento" />
+                </div>
 
                 <div class="cf-field">
                     <label class="cf-label">Cidade</label>
@@ -305,6 +309,17 @@
         </div>
 
         <!-- ACTIONS -->
+        @if (!string.IsNullOrEmpty(mensagemErro))
+{
+    <div style="background:#2a1a1a; border:1px solid #f87171; border-radius:10px; 
+                padding:12px 18px; color:#f87171; font-size:13px; margin-bottom:12px;">
+        ⚠️ @mensagemErro
+    </div>
+}
+
+<div class="cf-actions">
+    ...
+</div>
         <div class="cf-actions">
             <button type="button" class="cf-btn-cancel" @onclick="Voltar">Cancelar</button>
             <button type="submit" class="cf-btn-salvar" disabled="@salvando">
@@ -323,6 +338,7 @@
         Enderecos = new List<EnderecoDto>()
     };
 
+
     protected override async Task OnInitializedAsync()
     {
         if (id.HasValue)
@@ -337,20 +353,46 @@
 
     bool salvando = false;
 
-    async Task Salvar()
+   
+
+string mensagemErro = null;
+
+async Task Salvar()
+{
+    mensagemErro = null;
+    HttpResponseMessage response;
+
+    if (id == null)
+        response = await Api.Create(cliente);
+    else
+        response = await Api.Update(id.Value, cliente);
+
+    if (!response.IsSuccessStatusCode)
     {
-        salvando = true;
-
-        Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(cliente));
-
-        if (id == null)
-            await Api.Create(cliente);
-        else
-            await Api.Update(id.Value, cliente);
-
-        salvando = false;
-        Nav.NavigateTo("/clientes");
+        var conteudo = await response.Content.ReadAsStringAsync();
+        
+        try
+        {
+            var erro = System.Text.Json.JsonSerializer.Deserialize<ErroDto>(conteudo,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            mensagemErro = erro?.Mensagem ?? "Erro ao salvar.";
+        }
+        catch
+        {
+            // Se não for JSON, exibe o texto direto
+            mensagemErro = conteudo;
+        }
+        
+        return;
     }
+
+    salvando = false;
+    Nav.NavigateTo("/clientes");
+}
+public class ErroDto
+{
+    public string Mensagem { get; set; }
+}
 
     void FormatarCpf(ChangeEventArgs e)
     {

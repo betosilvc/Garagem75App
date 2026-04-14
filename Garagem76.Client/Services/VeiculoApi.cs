@@ -18,10 +18,10 @@ public class VeiculoApi
     public async Task<VeiculoDto> GetById(int id)
         => await _http.GetFromJsonAsync<VeiculoDto>($"api/veiculo/{id}");
 
-    public async Task Create(VeiculoDto v)
-        => await _http.PostAsJsonAsync("api/veiculo", v);
+    public async Task<HttpResponseMessage> Create(VeiculoDto v)
+    => await _http.PostAsJsonAsync("api/veiculo", v);
 
-    public async Task Update(int id, VeiculoDto v)
+    public async Task<HttpResponseMessage> Update(int id, VeiculoDto v)
         => await _http.PutAsJsonAsync($"api/veiculo/{id}", v);
 
     public async Task Delete(int id)
