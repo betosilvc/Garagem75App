@@ -46,6 +46,7 @@ namespace Garagem75.Api.Controllers
         {
             var item = await _context.Usuarios
                 .Include(u => u.TipoUsuario)
+                .Where(u=> u.Ativo)
                 .FirstOrDefaultAsync(u => u.IdUsuario == id);
 
             if (item == null)

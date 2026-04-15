@@ -1,0 +1,32 @@
+rodarprojetonocel
+
+1️⃣ Descobrir o IP da máquina
+
+No PC do aluno (CMD):
+
+ipconfig
+
+
+Anotar algo como:
+
+IPv4 Address . . . . . : 192.168.0.45
+
+2️⃣ Rodar o Blazor liberando acesso externo
+
+Na pasta do projeto:
+
+dotnet run --project WasmMP3.Client --urls http://0.0.0.0:5000
+
+
+⚠️ Esse comando é o “macete”
+Sem ele, o Kestrel só aceita localhost.
+
+3️⃣ Abrir no celular
+
+No celular, navegador:
+
+http://192.168.0.45:5000
+
+
+Pronto 🎉
+Agora o aluno está rodando o próprio app no celular.

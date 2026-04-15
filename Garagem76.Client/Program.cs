@@ -13,7 +13,7 @@ builder.Services.AddScoped(sp =>
 {
     var client = new HttpClient
     {
-        BaseAddress = new Uri("https://3mlx3xm4-7244.brs.devtunnels.ms/")
+        BaseAddress = new Uri("https://xvmvf8g9-7244.brs.devtunnels.ms/")
     };
 
     return client;

@@ -227,13 +227,20 @@ async Task Salvar()
     mensagemErro = null;
     HttpResponseMessage response;
 
-    if (id == null)
+    // Se o id for 0, é um novo cadastro (POST)
+    if (id == 0) 
+    {
         response = await Api.Create(veiculo);
-    else
+    }
+    else 
+    {
+        // Se o id for diferente de 0, é uma atualização (PUT)
         response = await Api.Update(id, veiculo);
+    }
 
     if (!response.IsSuccessStatusCode)
     {
+        // Tenta ler a mensagem de erro da API (ex: "Placa já cadastrada")
         var erro = await response.Content.ReadFromJsonAsync<ErroDto>();
         mensagemErro = erro?.Mensagem ?? "Erro ao salvar.";
         return;

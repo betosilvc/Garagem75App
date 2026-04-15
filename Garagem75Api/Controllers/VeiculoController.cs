@@ -11,7 +11,7 @@ namespace Garagem75.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Administrador,Mecanico")]
+    //[Authorize(Roles = "Administrador,Mecânico")]
     public class VeiculoController : ControllerBase
     {
         private readonly Garagem75DBContext _context;
